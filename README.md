@@ -1,6 +1,6 @@
 # NotiAI - 智能通知过滤 🛡️
 
-> 基于 DeepSeek AI 的 Android 智能通知过滤器。让你的手机只响重要的，不响垃圾的。
+> 越用越懂你，Smarter with every use.
 
 [![Version](https://img.shields.io/badge/version-5.21.8-blue)](https://github.com/jajoker-cl/-NotiAI-/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -10,89 +10,75 @@
 
 ## ☕ 支持开发者
 
-如果这个App帮你省下了被垃圾通知轰炸的时间，欢迎请我喝杯咖啡：
+如果NotiAI帮你省下了被垃圾通知轰炸的时间，欢迎请开发者喝杯咖啡：
 
 <p align="center">
   <img src="donate_qr.jpg" width="200" alt="收款码">
 </p>
 
-（扫码捐赠，金额随意，感谢支持！）
+---
+
+## 中文简介
+
+### 一句话标语
+
+越用越懂你，Smarter with every use.
+
+### 产品介绍
+
+是否长期开启手机静音或免打扰，却担心遗漏验证码、快递、家人私信等重要通知？NotiAI 基于 DeepSeek 大模型打造安卓端智能通知过滤工具，完美解决这一痛点。
+
+默认全局静默所有推送，由AI逐条判别消息优先级：银行交易、取件提醒、验证码、亲友对话自动放行响铃；广告营销、测速弹窗、垃圾推广直接静默拦截。
+
+### 使用流程
+
+1. 授予通知使用权，在设置填入 DeepSeek API Key，开启AI智能过滤；
+2. 在「AI评判」页面人工标注AI判断对错，持续迭代模型判断力；
+3. 数据积累完成一键生成本地规则，切换纯离线规则引擎，实现1ms以内极速本地拦截，零流量消耗、不再调用API；
+4. 规则引擎拦截结果仍由AI二次兜底校验，误拦消息自动提醒恢复。
+
+### 运行架构
+
+```
+通知推送 → AI云端判别 / 本地规则引擎拦截 → 放行或静默拦截
+用户对错反馈 → AI持续学习 → 批量生成静态规则库 → 纯离线极速过滤
+```
+
+### 隐私说明
+
+AI联网模式仅调用DeepSeek接口；规则引擎完全离线运行，所有数据仅存储于本机，不上传、不收集任何个人隐私信息。
 
 ---
 
-## 📖 中文说明
+## English Introduction
 
-### 它解决什么问题？
+### Slogan
 
-你是否整天开着静音/免打扰，又怕错过重要消息？NotiAI 帮你解决这个两难：
+Smarter with every use, the more you use it, the better it knows you.
 
-- 🔇 **默认全静音** — 所有通知来了先不出声
-- 🤖 **DeepSeek AI 判断** — AI 分析每条通知是否重要
-- 🔊 **重要才响** — 银行扣款、快递取件、验证码、家人消息 → 放行响铃
-- 🚫 **垃圾静默** — 广告推送、促销信息、无关通知 → 直接拦截
+### Overview
 
-### 怎么用？
+Tired of keeping your phone on Do Not Disturb mode for anti-spam but afraid of missing critical messages? NotiAI is an Android intelligent notification filter powered by DeepSeek LLM.
 
-**第一步：开启AI模式**
-1. 安装后给「通知使用权」权限
-2. 设置 → AI智能过滤 → 填入 DeepSeek API Key（[免费获取](https://platform.deepseek.com)）
-3. 打开「启用AI模式」开关
+It mutes all notifications by default and judges every single message via AI. Important alerts including bank deductions, parcel pick-up codes, verification codes and family chats will ring normally; ads, promotions and irrelevant pop-ups will be blocked silently.
 
-**第二步：训练AI（关键！）**
-1. 去主页「AI评判」标签查看AI的判断记录
-2. 判断对的点 ✅，判断错的点 ❌ 并告诉AI哪里错了
-3. 积累几天纠错数据后，点「生成规则」
+### Usage Guide
 
-**第三步：切换规则引擎**
-- AI生成规则后，可以关闭AI模式
-- 规则引擎以 <1ms 速度本地拦截，不吃流量不耗API
-- 规则引擎拦截的通知，AI还会在后台校验——如果AI觉得不该拦，会自动恢复并弹窗提醒你
-
-### 架构逻辑
-
-```
-通知到达 → AI模式/AI+规则模式 → 判断 → 拦截/放行
-                ↓
-         AI评判页面 → 用户✅❌纠错 → AI学习优化
-                ↓
-         积累足够数据 → 点击「生成规则」 → 规则库
-                ↓
-         关闭AI模式 → 纯本地 <1ms 闪电拦截
-```
-
-### 隐私
-
-- AI模式需要联网调用DeepSeek API
-- 规则模式完全离线，数据不出手机
-- 不收集任何个人信息
-
----
-
-## 📖 English
-
-### What it does
-
-NotiAI uses DeepSeek AI to intelligently filter Android notifications:
-
-- All notifications are evaluated by AI
-- Important ones (banking, delivery, verification codes, family messages) → let through
-- Spam (ads, promotions, irrelevant) → blocked silently
-
-### How to use
-
-1. Enable notification access
-2. Go to Settings → AI Filter → enter your DeepSeek API Key
-3. Turn on AI mode
-4. Review AI decisions in the "AI Judgement" tab, mark correct/incorrect
-5. After accumulating data, click "Generate Rules" to create local rules
-6. Switch to rule engine for <1ms local filtering
+1. Grant notification access permission, input your DeepSeek API Key in Settings and enable AI filter mode.
+2. Review AI judgement records on the AI Judgement page, mark correct or wrong decisions to train the model continuously.
+3. Generate local static rules with one click after sufficient feedback. Switch to rule engine for ultra-fast local interception within 1ms without API calls or mobile data.
+4. AI will double-check results blocked by local rules and remind you automatically for false interceptions.
 
 ### Architecture
 
-- **AI Mode**: DeepSeek cloud AI judges notifications (~1-2s)
-- **Rule Engine**: Local keyword matching (<1ms)
-- **AI Validation**: AI re-checks rule engine decisions, alerts you on conflicts
-- **AI Rule Generation**: AI learns from your feedback and auto-generates rules
+```
+Incoming notifications → Cloud AI judgement / Local rule engine → Release or block silently
+User feedback correction → Model continuous learning → Auto generate local rules → Fully offline lightweight filtering
+```
+
+### Privacy Policy
+
+AI mode requires network access to call DeepSeek API. Rule engine works entirely offline. All data is stored locally on your device, no personal data will be collected or uploaded externally.
 
 ---
 
