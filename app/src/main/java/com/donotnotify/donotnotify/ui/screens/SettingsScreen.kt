@@ -401,11 +401,11 @@ fun SettingsScreen(
             SettingsSection(title = stringResource(R.string.settings_section_about)) {
                 SettingsRow(
                     icon = Icons.Filled.BugReport,
-                    title = "报告问题",
-                    subtitle = "原作者GitHub Issues",
+                    title = "报告问题 / 报告问题",
+                    subtitle = "原作者 Issues | AI版仓库",
                     onClick = {
                         context.startActivity(
-                            Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/anujja/DoNotNotify/issues"))
+                            Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jajoker-cl/NotiAI"))
                         )
                     },
                     trailing = { NavChevron() }

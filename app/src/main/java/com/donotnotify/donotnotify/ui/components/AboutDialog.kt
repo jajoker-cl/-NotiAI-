@@ -36,7 +36,7 @@ fun AboutDialog(onDismiss: () -> Unit) {
                 Text(stringResource(R.string.about_developer, developerEmail))
                 Text(style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(top = 12.dp),
-                    text = "原作者: Anuj Jain\nAI功能贡献者: SER TAOIST")
+                    text = "原作者: Anuj Jain\nAI功能贡献者: jajoker-cl")
             }
         },
         confirmButton = {
