@@ -1,0 +1,6 @@
+• New: STACK rule type — groups repeated notifications from an app into a single summary instead of blocking them
+• New: Master switch on the Rules tab to pause/resume all rules at once
+• New: Rule type descriptions shown when creating a rule
+• Fixed: Tapping a stacked notification summary now opens the source app
+• Fixed: Two simultaneous notifications from the same app now both appear in blocked history
+• Fixed: False "service stopped" warnings when the service was actually running normally

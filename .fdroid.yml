@@ -1,0 +1,21 @@
+Categories:
+  - System
+
+License: MIT
+
+AutoName: DoNotNotify
+
+RepoType: git
+Repo: https://github.com/anujja/DoNotNotify
+
+Builds:
+  - versionName: '5.1'
+    versionCode: 46
+    commit: v5.1
+    gradle:
+      - yes
+
+AutoUpdateMode: Version v%v
+UpdateCheckMode: Tags
+CurrentVersion: '5.1'
+CurrentVersionCode: 46

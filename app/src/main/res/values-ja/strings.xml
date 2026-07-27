@@ -1,0 +1,256 @@
+<resources>
+    <string name="app_name">DoNotNotify</string>
+
+    <!-- Tabs -->
+    <string name="tab_history">履歴 (%d)</string>
+    <string name="tab_rules">ルール (%d)</string>
+    <string name="tab_blocked">ブロック済み (%d)</string>
+
+    <!-- Common actions -->
+    <string name="cancel">キャンセル</string>
+    <string name="clear">クリア</string>
+    <string name="close">閉じる</string>
+    <string name="save">保存</string>
+    <string name="delete">削除</string>
+    <string name="add">追加</string>
+    <string name="ok">OK</string>
+    <string name="open">開く</string>
+    <string name="resume">再開</string>
+    <string name="stop">停止</string>
+    <string name="got_it">了解</string>
+    <string name="back">戻る</string>
+    <string name="export">エクスポート</string>
+    <string name="import_rules">インポート</string>
+    <string name="settings">設定</string>
+    <string name="about">アプリについて</string>
+
+    <!-- Search -->
+    <string name="search">検索</string>
+    <string name="clear_search">検索をクリア</string>
+    <string name="search_notifications">通知を検索…</string>
+    <string name="search_apps">アプリを検索…</string>
+
+    <!-- History screen -->
+    <string name="no_notifications_yet">通知はまだありません</string>
+    <string name="no_notifications_yet_desc">アプリからの通知がここに表示されます。</string>
+    <string name="no_results_found">結果が見つかりません</string>
+    <string name="no_results_found_desc">検索条件に一致する通知がありません。別のキーワードで検索してください。</string>
+    <string name="clear_history">履歴をクリア</string>
+    <string name="clear_history_title">履歴をクリアしますか？</string>
+    <string name="clear_history_confirm">すべての通知履歴をクリアしてもよろしいですか？</string>
+    <string name="reset">リセット</string>
+    <string name="reset_hit_counters">ヒット数をリセット</string>
+    <string name="reset_hit_counters_title">ヒット数をリセットしますか？</string>
+    <string name="reset_hit_counters_confirm">すべてのルールのヒット数をゼロにリセットしてもよろしいですか？</string>
+    <string name="toast_hit_counters_reset">ヒット数をリセットしました</string>
+    <string name="stop_monitoring_title">監視を停止しますか？</string>
+    <string name="stop_monitoring_confirm">%sの監視を停止してもよろしいですか？監視は後から「監視対象外アプリ」セクションで再開できます。</string>
+    <string name="stop_monitoring_app">%sの監視を停止</string>
+    <string name="unmonitored_apps">監視対象外アプリ (%d)</string>
+    <string name="ongoing_notification_cannot_block">これは常駐通知です。ブロックできない場合があります。</string>
+    <string name="collapse">折りたたむ</string>
+    <string name="expand">展開する</string>
+
+    <!-- Notification labels in list cards -->
+    <string name="notification_title_prefix">タイトル: %s</string>
+    <string name="notification_text_prefix">テキスト: %s</string>
+
+    <!-- Ongoing notification icon -->
+    <string name="ongoing_notification">常駐通知</string>
+    <string name="time_limited_rule">時間制限付きルール</string>
+
+    <!-- Rules screen -->
+    <string name="no_rules_created">ルールが作成されていません</string>
+    <string name="no_rules_created_desc">不要な通知を自動的にブロックするルールを作成しましょう。「履歴」タブで通知をタップしてルールを作成するか、プリセットルールを利用してください。</string>
+    <string name="rules_auto_block_desc">以下のルールに一致する通知は、各ルールに従って自動的に処理されます。</string>
+    <string name="rules_master_switch_label">すべてのルールを有効にする</string>
+    <string name="how_to_add_rule">新しいルールの追加方法</string>
+    <string name="how_to_add_rule_desc">新しいルールを作成するには:\n\n1. 「履歴」タブに切り替えます\n2. ルールを作成したい通知を見つけます\n3. その通知をタップします\n4. オプションから「ルールを作成」を選択します\n5. 必要に応じてルール設定をカスタマイズします\n\nルールはここに表示され、一致する通知に自動的に適用されます。</string>
+    <string name="add_new_rule">新しいルールを追加</string>
+    <string name="browse_prebuilt_rules">プリセットルールを閲覧</string>
+    <string name="hits_count">ヒット数: %d</string>
+    <string name="no_hits">ヒットなし</string>
+
+    <!-- Blocked screen -->
+    <string name="no_blocked_notifications">ブロックされた通知はありません</string>
+    <string name="no_blocked_notifications_desc">ルールによってブロックされた通知がここに表示されます。「ルール」タブでルールを作成して、不要な通知のブロックを始めましょう。</string>
+    <string name="clear_blocked_history">ブロック履歴をクリア</string>
+    <string name="clear_blocked_history_title">ブロック履歴をクリアしますか？</string>
+    <string name="clear_blocked_history_confirm">すべてのブロック済み通知履歴をクリアしてもよろしいですか？</string>
+    <string name="ongoing_notification_partially_blocked">これは常駐通知です。完全にはブロックされていない可能性があります。</string>
+    <string name="delete_blocked_notification">ブロック済み通知を削除</string>
+
+    <!-- Pre-built rules screen -->
+    <string name="prebuilt_rules">プリセットルール</string>
+    <string name="prebuilt_rules_desc">インストール済みアプリ向けの設定済みルールを追加できます。これらのルールは、一般的なプロモーションやエンゲージメント通知をブロックします。</string>
+    <string name="no_rules_match_search">検索に一致するルールがありません</string>
+    <string name="try_different_search">別のキーワードで検索してください</string>
+    <string name="no_new_prebuilt_rules">新しいプリセットルールはありません</string>
+    <string name="all_rules_added">利用可能なすべてのルールが追加済みか、対応アプリがインストールされていません。</string>
+    <string name="blocks_notifications_containing">以下を含む通知をブロック:</string>
+    <string name="allows_only_notifications_containing">以下を含む通知のみ許可:</string>
+    <string name="denylist">拒否リスト</string>
+    <string name="allowlist">許可リスト</string>
+    <string name="unknown_app">不明</string>
+
+    <!-- Enable notification listener screen -->
+    <string name="notifications_off">通知オフ</string>
+    <string name="permission_required">権限が必要です</string>
+    <string name="permission_required_desc">このアプリは通知をブロックするために通知へのアクセスが必要です。デバイスの設定でアクセスを有効にしてください。</string>
+    <string name="enable_notification_access">通知アクセスを有効にする</string>
+
+    <!-- Settings screen -->
+    <string name="history_retention_days">履歴の保持期間（日数）:</string>
+    <string name="export_import_rules">ルールのエクスポート/インポート</string>
+    <string name="choose_action">操作を選択</string>
+    <string name="support_this_app">寄付・サポート</string>
+    <string name="report_an_issue">問題を報告</string>
+    <string name="app_version">DoNotNotify v%s</string>
+    <string name="settings_section_general">一般</string>
+    <string name="settings_section_rules">ルールとデータ</string>
+    <string name="settings_section_about">サポートと情報</string>
+    <string name="history_retention">履歴の保持</string>
+    <string name="history_retention_desc">これより古い通知は自動的に削除されます</string>
+    <string name="days_unit">日</string>
+    <string name="export_import_rules_desc">ルールをファイルにバックアップまたは復元します</string>
+    <string name="reset_hit_counters_desc">すべてのルールのヒット数をゼロに戻します</string>
+    <string name="support_this_app_desc">DoNotNotify を無料・広告なしに保つためにご支援ください</string>
+    <string name="report_an_issue_desc">バグの報告や機能のリクエスト</string>
+    <string name="about_desc">アプリのバージョン、ライセンスなど</string>
+    <string name="status">ステータス</string>
+    <string name="rules_exported_successfully">ルールのエクスポートに成功しました。</string>
+    <string name="failed_to_export_rules">ルールのエクスポートに失敗しました: %s</string>
+    <string name="successfully_imported_rules">%d件のルールをインポートしました。</string>
+    <string name="invalid_rules_file">無効なルールファイル: ルールを解析できませんでした。</string>
+    <string name="invalid_rules_file_schema">無効なルールファイル: スキーマが一致しません。</string>
+    <string name="failed_to_import_rules">ルールのインポートに失敗しました: %s</string>
+
+    <!-- Rule dialogs -->
+    <string name="advanced_configuration">詳細設定</string>
+    <string name="enable_rule">ルールを有効にする</string>
+    <string name="enable_time_limit">時間制限を有効にする</string>
+    <string name="start_time">開始時刻:</string>
+    <string name="end_time">終了時刻:</string>
+    <string name="title_filter_optional">タイトルフィルター（任意）</string>
+    <string name="text_filter_optional">テキストフィルター（任意）</string>
+    <string name="save_rule">ルールを保存</string>
+    <string name="add_rule_title">新しいルール (%s)</string>
+    <string name="edit_rule_title">ルールを編集 (%s)</string>
+    <string name="rule_for">%sのルール</string>
+    <string name="blocked_notification_from">%sからの通知をブロックしました</string>
+
+    <!-- Delete confirmation dialog -->
+    <string name="delete_item_title">アイテムを削除しますか？</string>
+    <string name="delete_item_confirm">このアイテムを削除してもよろしいですか？\n\n%s</string>
+
+    <!-- Notification details dialogs -->
+    <string name="notification_details">通知の詳細</string>
+    <string name="label_app">アプリ:</string>
+    <string name="label_title">タイトル:</string>
+    <string name="label_text">テキスト:</string>
+    <string name="label_time">時刻:</string>
+    <string name="create_rule">ルールを作成</string>
+    <string name="view_rule">ルールを表示</string>
+
+    <!-- Auto-added rules dialog -->
+    <string name="rules_added_automatically">ルールが自動的に追加されました</string>
+    <string name="rules_added_automatically_desc">お使いのデバイスで以下のアプリが見つかり、ブロックルールを追加しました:</string>
+    <string name="and_more">+ 他%d件</string>
+    <string name="do_not_show_again">今後表示しない</string>
+
+    <!-- About dialog -->
+    <string name="about_app">アプリ: %s</string>
+    <string name="about_version">バージョン: %s</string>
+    <string name="about_developer">開発者: %s</string>
+
+    <!-- Setup wizard -->
+    <string name="setup_skip">スキップ</string>
+    <string name="setup_next">次へ</string>
+    <string name="setup_back">戻る</string>
+    <string name="setup_finish">完了</string>
+    <string name="setup_done_check">完了</string>
+    <string name="setup_step_indicator">ステップ %1$d / %2$d</string>
+
+    <string name="setup_welcome_title">DoNotNotifyを動かし続ける</string>
+    <string name="setup_welcome_body">一部のAndroid端末はバッテリー節約のためバックグラウンドアプリを強制終了します — これにより通知のフィルタリングが知らないうちに停止してしまいます。次のステップでこのアプリが終了されないよう保護します。</string>
+    <string name="setup_welcome_cta">はじめる</string>
+
+    <string name="setup_listener_title">通知へのアクセスを許可</string>
+    <string name="setup_listener_body">DoNotNotifyはルールに従って通知をフィルタリング・ブロックするため、通知へのアクセス権が必要です。</string>
+    <string name="setup_listener_cta">設定を開く</string>
+    <string name="setup_listener_granted">許可済み</string>
+
+    <string name="setup_battery_title">バッテリー最適化を無効にする</string>
+    <string name="setup_battery_body">Androidはバッテリー節約のためアプリをスリープ状態にします（Doze）。DoNotNotifyがバックグラウンドでフィルタリングを続けられるよう、無制限での実行を許可してください。</string>
+    <string name="setup_battery_cta">バッテリー使用を制限なしに許可</string>
+    <string name="setup_battery_granted">許可済み</string>
+
+    <string name="setup_oem_title">端末の自動起動を許可</string>
+    <string name="setup_oem_body_generic">お使いの端末メーカーは独自にバックグラウンドアプリを制限する仕組みを追加しています。下のボタンから該当する設定画面を開き、DoNotNotifyの自動起動／バックグラウンド動作を有効にしてください。</string>
+    <string name="setup_oem_body_xiaomi">Xiaomi / MIUIはバックグラウンドアプリを強制終了する傾向があります。下のボタンから自動起動の設定を開き、DoNotNotifyを有効にしてください。さらに「バッテリーとパフォーマンス → アプリのバッテリーセーバー → 制限なし」も確認してください。</string>
+    <string name="setup_oem_body_huawei">Huawei / Honorは「端末管理」でバックグラウンドアプリを制限します。下のボタンから「起動の管理」を開き、DoNotNotifyの自動起動を有効にしてください。</string>
+    <string name="setup_oem_body_oppo">OPPO / ColorOSはバックグラウンドアプリを制限します。下のボタンから「起動マネージャー」を開き、DoNotNotifyの自動起動を許可してください。</string>
+    <string name="setup_oem_body_oneplus">OnePlusは既定でバックグラウンド動作を制限します。下のボタンからDoNotNotifyのバックグラウンド起動を許可してください。</string>
+    <string name="setup_oem_body_vivo">Vivoはバックグラウンドアプリを制限します。下のボタンから「バックグラウンド起動の管理」を開き、DoNotNotifyを許可してください。</string>
+    <string name="setup_oem_body_samsung">SamsungのDevice CareはDoNotNotifyをスリープさせる場合があります。下のボタンからバッテリー設定を開き、DoNotNotifyを「制限なし」に設定してください（バッテリー → バックグラウンド使用の制限）。</string>
+    <string name="setup_oem_body_asus">ASUS Mobile Managerはバックグラウンドアプリを制限します。下のボタンから自動起動マネージャーを開き、DoNotNotifyを有効にしてください。</string>
+    <string name="setup_oem_body_letv">Letvはバックグラウンドアプリを制限します。下のボタンから自動起動の管理を開いてください。</string>
+    <string name="setup_oem_body_meizu">Meizuはバックグラウンドアプリを制限します。下のボタンからセキュリティ設定を開いてください。</string>
+    <string name="setup_oem_body_nokia">NokiaはEvenwellの省電力レイヤーを使用しており、DoNotNotifyを終了させることがあります。下のボタンから保護対象リストに追加してください。</string>
+    <string name="setup_oem_cta">設定を開く</string>
+    <string name="setup_oem_done">設定しました</string>
+    <string name="setup_oem_failed">設定画面を開けませんでした。お使いの端末で自動起動またはバックグラウンド動作の設定を手動で見つけ、DoNotNotifyを許可してください。</string>
+
+    <string name="setup_done_title">準備完了</string>
+    <string name="setup_done_body">DoNotNotifyはバックグラウンドで動作し、通知をフィルタリングします。動作状況を定期的に確認します — 端末がアプリを終了させた場合は、修正のための通知が届きます。</string>
+
+    <!-- Health check notification -->
+    <string name="health_channel_name">サービスの状態</string>
+    <string name="health_channel_description">DoNotNotifyが動作していないときに通知します。</string>
+    <string name="health_notification_title">DoNotNotifyが動作していません</string>
+    <string name="health_notification_body">端末がDoNotNotifyを終了しました。タップして再度有効にし、省電力設定を確認してください。</string>
+
+    <!-- Main screen -->
+    <string name="service_active">サービス稼働中</string>
+    <string name="toast_service_enabled">通知サービスが有効です</string>
+    <string name="toast_service_disabled">通知サービスが無効です</string>
+    <string name="toast_rule_added">ルールを追加しました</string>
+    <string name="toast_rule_deleted">ルールを削除しました</string>
+    <string name="toast_rule_updated">ルールを更新しました</string>
+    <string name="toast_notification_deleted">通知を削除しました</string>
+    <string name="toast_history_cleared">履歴をクリアしました</string>
+    <string name="toast_blocked_history_cleared">ブロック履歴をクリアしました</string>
+    <string name="toast_copied_to_clipboard">クリップボードにコピーしました</string>
+    <string name="toast_failed_to_trigger">アクションの実行に失敗しました</string>
+    <string name="toast_action_unavailable">通知アクションは利用できなくなりました</string>
+    <string name="toast_stopped_monitoring">%sの監視を停止しました</string>
+    <string name="toast_resumed_monitoring">%sの監視を再開しました</string>
+    <string name="stacks_notifications_containing">以下を含む通知をまとめる:</string>
+    <string name="stack">まとめる</string>
+    <string name="match_type_contains">含む</string>
+    <string name="match_type_regex">正規表現</string>
+    <string name="rule_type_desc_denylist">このルールに一致するすべての通知をブロックします。</string>
+    <string name="rule_type_desc_allowlist">このルールに一致する通知のみを許可します。このアプリからの他の通知はすべてブロックされます。</string>
+    <string name="rule_type_desc_stack">一致する通知を1つのサマリーにまとめます。元の通知は削除されます。</string>
+    <string name="stack_summary_count">%d件の通知</string>
+    <string name="stack_overflow_more">他%d件</string>
+    <string name="stack_warning_notifications_disabled">まとめ機能は無効です — DoNotNotify の通知がオフになっています。タップして有効にしてください。</string>
+    <string name="stack_warning_channel_disabled">まとめ機能は無効です — まとめた通知チャンネルが無効になっています。タップして有効にしてください。</string>
+    <string name="setup_post_notif_title">DoNotNotify に通知の送信を許可</string>
+    <string name="setup_post_notif_body">まとめルールは、グループ化した通知を DoNotNotify から再送信します。Android 13 以降では、このアプリに通知の送信を許可する必要があります。許可しない場合、まとめ機能は動作しません。</string>
+    <string name="setup_post_notif_cta">通知を許可</string>
+    <string name="setup_post_notif_granted">許可済み</string>
+    <string name="rules_file_too_large">ルールファイルが大きすぎます。</string>
+    <string name="import_no_rules">インポートするルールがありません。</string>
+    <string name="imported_rules_some_skipped">%1$d 件のルールをインポートしました（%2$d 件をスキップ）。</string>
+    <string name="not_applicable">該当なし</string>
+    <string name="unknown">不明</string>
+    <string name="stack_channel_group_name">まとめた通知</string>
+    <string name="stack_channel_name_app_rule">%1$s — ルール %2$s</string>
+    <string name="stack_channel_name_unnamed">まとめルール %1$s</string>
+    <string name="rule_name_optional">ルール名（任意）</string>
+    <string name="rule_name_supporting">通知チャンネル名として使われ、音とバイブレーションを設定できます。</string>
+    <string name="rule_name_use_suggestion">「%1$s」を使用</string>
+    <string name="rule_sound_vibration">音とバイブレーション</string>
+    <string name="rule_sound_vibration_desc">システム設定で構成</string>
+</resources>

@@ -1,0 +1,66 @@
+package com.donotnotify.donotnotify.ui.components
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import com.donotnotify.donotnotify.R
+import com.donotnotify.donotnotify.SimpleNotification
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+@Composable
+fun NotificationDetailsDialog(
+    notification: SimpleNotification,
+    onDismiss: () -> Unit,
+    onViewRule: (() -> Unit)? = null
+) {
+    val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(stringResource(R.string.notification_details), fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.padding(bottom = 16.dp))
+                DetailRow(stringResource(R.string.label_app), notification.appLabel ?: notification.packageName.orEmpty())
+                DetailRow(stringResource(R.string.label_title), notification.title.orEmpty())
+                DetailRow(stringResource(R.string.label_text), notification.text.orEmpty())
+                DetailRow(stringResource(R.string.label_time), dateFormat.format(Date(notification.timestamp)))
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (onViewRule != null) {
+                        OutlinedButton(onClick = onViewRule, modifier = Modifier.weight(1f)) {
+                            Text(stringResource(R.string.view_rule))
+                        }
+                    }
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.close))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailRow(label: String, value: String) {
+    Row(modifier = Modifier.padding(vertical = 4.dp)) {
+        Text(label, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(0.25f))
+        Text(value, modifier = Modifier.fillMaxWidth())
+    }
+}

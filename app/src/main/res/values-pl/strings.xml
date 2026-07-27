@@ -1,0 +1,256 @@
+<resources>
+    <string name="app_name">DoNotNotify</string>
+
+    <!-- Tabs -->
+    <string name="tab_history">Historia (%d)</string>
+    <string name="tab_rules">Reguły (%d)</string>
+    <string name="tab_blocked">Zablokowane (%d)</string>
+
+    <!-- Common actions -->
+    <string name="cancel">Anuluj</string>
+    <string name="clear">Wyczyść</string>
+    <string name="close">Zamknij</string>
+    <string name="save">Zapisz</string>
+    <string name="delete">Usuń</string>
+    <string name="add">Dodaj</string>
+    <string name="ok">Ok</string>
+    <string name="open">Otwórz</string>
+    <string name="resume">Wznów</string>
+    <string name="stop">Zatrzymaj</string>
+    <string name="got_it">Rozumiem</string>
+    <string name="back">Wstecz</string>
+    <string name="export">Eksportuj</string>
+    <string name="import_rules">Importuj</string>
+    <string name="settings">Ustawienia</string>
+    <string name="about">O aplikacji</string>
+
+    <!-- Search -->
+    <string name="search">Szukaj</string>
+    <string name="clear_search">Wyczyść wyszukiwanie</string>
+    <string name="search_notifications">Szukaj powiadomień…</string>
+    <string name="search_apps">Szukaj aplikacji…</string>
+
+    <!-- History screen -->
+    <string name="no_notifications_yet">Brak powiadomień</string>
+    <string name="no_notifications_yet_desc">Powiadomienia z Twoich aplikacji pojawią się tutaj.</string>
+    <string name="no_results_found">Brak wyników</string>
+    <string name="no_results_found_desc">Żadne powiadomienie nie pasuje do Twojego wyszukiwania. Spróbuj innego hasła.</string>
+    <string name="clear_history">Wyczyść historię</string>
+    <string name="clear_history_title">Wyczyścić historię?</string>
+    <string name="clear_history_confirm">Czy na pewno chcesz wyczyścić całą historię powiadomień?</string>
+    <string name="reset">Resetuj</string>
+    <string name="reset_hit_counters">Resetuj liczniki trafień</string>
+    <string name="reset_hit_counters_title">Zresetować liczniki trafień?</string>
+    <string name="reset_hit_counters_confirm">Czy na pewno chcesz wyzerować licznik trafień dla wszystkich reguł?</string>
+    <string name="toast_hit_counters_reset">Liczniki trafień zresetowane</string>
+    <string name="stop_monitoring_title">Zatrzymać monitorowanie?</string>
+    <string name="stop_monitoring_confirm">Czy na pewno chcesz zatrzymać monitorowanie %s? Możesz wznowić monitorowanie później w sekcji Niemonitorowane aplikacje.</string>
+    <string name="stop_monitoring_app">Zatrzymaj monitorowanie %s</string>
+    <string name="unmonitored_apps">Niemonitorowane aplikacje (%d)</string>
+    <string name="ongoing_notification_cannot_block">To było trwałe powiadomienie. Jego zablokowanie może nie być możliwe.</string>
+    <string name="collapse">Zwiń</string>
+    <string name="expand">Rozwiń</string>
+
+    <!-- Notification labels in list cards -->
+    <string name="notification_title_prefix">Tytuł: %s</string>
+    <string name="notification_text_prefix">Treść: %s</string>
+
+    <!-- Ongoing notification icon -->
+    <string name="ongoing_notification">Trwałe powiadomienie</string>
+    <string name="time_limited_rule">Reguła z ograniczeniem czasowym</string>
+
+    <!-- Rules screen -->
+    <string name="no_rules_created">Brak reguł</string>
+    <string name="no_rules_created_desc">Twórz reguły, aby automatycznie blokować niechciane powiadomienia. Dotknij powiadomienia na karcie Historia, aby utworzyć regułę, lub przeglądaj gotowe reguły.</string>
+    <string name="rules_auto_block_desc">Powiadomienia pasujące do poniższych reguł są obsługiwane automatycznie zgodnie z każdą regułą.</string>
+    <string name="rules_master_switch_label">Wszystkie reguły aktywne</string>
+    <string name="how_to_add_rule">Jak dodać nową regułę</string>
+    <string name="how_to_add_rule_desc">Aby utworzyć nową regułę:\n\n1. Przejdź do karty „Historia”\n2. Znajdź powiadomienie, dla którego chcesz utworzyć regułę\n3. Dotknij powiadomienia\n4. Wybierz „Utwórz regułę” z opcji\n5. Dostosuj ustawienia reguły według potrzeb\n\nReguła pojawi się tutaj i będzie automatycznie stosowana do pasujących powiadomień.</string>
+    <string name="add_new_rule">Dodaj nową regułę</string>
+    <string name="browse_prebuilt_rules">Przeglądaj gotowe reguły</string>
+    <string name="hits_count">Trafień: %d</string>
+    <string name="no_hits">Brak trafień</string>
+
+    <!-- Blocked screen -->
+    <string name="no_blocked_notifications">Brak zablokowanych powiadomień</string>
+    <string name="no_blocked_notifications_desc">Powiadomienia zablokowane przez Twoje reguły pojawią się tutaj. Utwórz reguły na karcie Reguły, aby zacząć blokować niechciane powiadomienia.</string>
+    <string name="clear_blocked_history">Wyczyść historię blokad</string>
+    <string name="clear_blocked_history_title">Wyczyścić historię blokad?</string>
+    <string name="clear_blocked_history_confirm">Czy na pewno chcesz wyczyścić całą historię zablokowanych powiadomień?</string>
+    <string name="ongoing_notification_partially_blocked">To było trwałe powiadomienie. Mogło nie zostać w pełni zablokowane.</string>
+    <string name="delete_blocked_notification">Usuń zablokowane powiadomienie</string>
+
+    <!-- Pre-built rules screen -->
+    <string name="prebuilt_rules">Gotowe reguły</string>
+    <string name="prebuilt_rules_desc">Dodaj wstępnie skonfigurowane reguły dla zainstalowanych aplikacji. Te reguły blokują typowe powiadomienia promocyjne i angażujące.</string>
+    <string name="no_rules_match_search">Brak reguł pasujących do wyszukiwania</string>
+    <string name="try_different_search">Spróbuj innego hasła wyszukiwania</string>
+    <string name="no_new_prebuilt_rules">Brak nowych gotowych reguł</string>
+    <string name="all_rules_added">Dodałeś już wszystkie dostępne reguły dla zainstalowanych aplikacji lub żadna obsługiwana aplikacja nie jest zainstalowana.</string>
+    <string name="blocks_notifications_containing">Blokuje powiadomienia zawierające:</string>
+    <string name="allows_only_notifications_containing">Zezwala tylko na powiadomienia zawierające:</string>
+    <string name="denylist">Lista blokowania</string>
+    <string name="allowlist">Lista zezwoleń</string>
+    <string name="unknown_app">Nieznana</string>
+
+    <!-- Enable notification listener screen -->
+    <string name="notifications_off">Powiadomienia wyłączone</string>
+    <string name="permission_required">Wymagane uprawnienie</string>
+    <string name="permission_required_desc">Ta aplikacja potrzebuje dostępu do Twoich powiadomień, aby je blokować. Włącz dostęp w ustawieniach urządzenia.</string>
+    <string name="enable_notification_access">Włącz dostęp do powiadomień</string>
+
+    <!-- Settings screen -->
+    <string name="history_retention_days">Przechowywanie historii (dni):</string>
+    <string name="export_import_rules">Eksportuj/Importuj reguły</string>
+    <string name="choose_action">Wybierz akcję</string>
+    <string name="support_this_app">Przekaż darowiznę &amp; wesprzyj</string>
+    <string name="report_an_issue">Zgłoś problem</string>
+    <string name="app_version">DoNotNotify v%s</string>
+    <string name="settings_section_general">Ogólne</string>
+    <string name="settings_section_rules">Reguły i dane</string>
+    <string name="settings_section_about">Wsparcie i informacje</string>
+    <string name="history_retention">Przechowywanie historii</string>
+    <string name="history_retention_desc">Starsze powiadomienia są usuwane automatycznie</string>
+    <string name="days_unit">dni</string>
+    <string name="export_import_rules_desc">Utwórz kopię zapasową reguł w pliku lub je przywróć</string>
+    <string name="reset_hit_counters_desc">Wyzeruj licznik trafień wszystkich reguł</string>
+    <string name="support_this_app_desc">Pomóż utrzymać DoNotNotify darmowym i bez reklam</string>
+    <string name="report_an_issue_desc">Zgłoś błąd lub zaproponuj funkcję</string>
+    <string name="about_desc">Wersja aplikacji, licencje i więcej</string>
+    <string name="status">Status</string>
+    <string name="rules_exported_successfully">Reguły zostały pomyślnie wyeksportowane.</string>
+    <string name="failed_to_export_rules">Nie udało się wyeksportować reguł: %s</string>
+    <string name="successfully_imported_rules">Pomyślnie zaimportowano %d reguł.</string>
+    <string name="invalid_rules_file">Nieprawidłowy plik reguł: nie można przetworzyć reguł.</string>
+    <string name="invalid_rules_file_schema">Nieprawidłowy plik reguł: niezgodność schematu.</string>
+    <string name="failed_to_import_rules">Nie udało się zaimportować reguł: %s</string>
+
+    <!-- Rule dialogs -->
+    <string name="advanced_configuration">Zaawansowana konfiguracja</string>
+    <string name="enable_rule">Włącz regułę</string>
+    <string name="enable_time_limit">Włącz ograniczenie czasowe</string>
+    <string name="start_time">Czas rozpoczęcia:</string>
+    <string name="end_time">Czas zakończenia:</string>
+    <string name="title_filter_optional">Filtr tytułu (opcjonalny)</string>
+    <string name="text_filter_optional">Filtr treści (opcjonalny)</string>
+    <string name="save_rule">Zapisz regułę</string>
+    <string name="add_rule_title">Nowa reguła (%s)</string>
+    <string name="edit_rule_title">Edytuj regułę (%s)</string>
+    <string name="rule_for">Reguła dla %s</string>
+    <string name="blocked_notification_from">Zablokowane powiadomienie od %s</string>
+
+    <!-- Delete confirmation dialog -->
+    <string name="delete_item_title">Usunąć element?</string>
+    <string name="delete_item_confirm">Czy na pewno chcesz usunąć ten element?\n\n%s</string>
+
+    <!-- Notification details dialogs -->
+    <string name="notification_details">Szczegóły powiadomienia</string>
+    <string name="label_app">Aplikacja:</string>
+    <string name="label_title">Tytuł:</string>
+    <string name="label_text">Treść:</string>
+    <string name="label_time">Czas:</string>
+    <string name="create_rule">Utwórz regułę</string>
+    <string name="view_rule">Zobacz regułę</string>
+
+    <!-- Auto-added rules dialog -->
+    <string name="rules_added_automatically">Reguły dodane automatycznie</string>
+    <string name="rules_added_automatically_desc">Wykryliśmy następujące aplikacje na Twoim urządzeniu i dodaliśmy dla nich reguły blokowania:</string>
+    <string name="and_more">+ %d więcej</string>
+    <string name="do_not_show_again">Nie pokazuj ponownie</string>
+
+    <!-- About dialog -->
+    <string name="about_app">Aplikacja: %s</string>
+    <string name="about_version">Wersja: %s</string>
+    <string name="about_developer">Deweloper: %s</string>
+
+    <!-- Setup wizard -->
+    <string name="setup_skip">Pomiń</string>
+    <string name="setup_next">Dalej</string>
+    <string name="setup_back">Wstecz</string>
+    <string name="setup_finish">Zakończ</string>
+    <string name="setup_done_check">Gotowe</string>
+    <string name="setup_step_indicator">Krok %1$d z %2$d</string>
+
+    <string name="setup_welcome_title">Utrzymaj DoNotNotify przy życiu</string>
+    <string name="setup_welcome_body">Niektóre telefony z Androidem agresywnie zamykają aplikacje działające w tle, aby oszczędzać baterię — co po cichu wyłącza filtrowanie powiadomień. Kolejne kroki chronią tę aplikację przed zamknięciem.</string>
+    <string name="setup_welcome_cta">Rozpocznij</string>
+
+    <string name="setup_listener_title">Przyznaj dostęp do powiadomień</string>
+    <string name="setup_listener_body">DoNotNotify potrzebuje dostępu do Twoich powiadomień, aby filtrować je i blokować zgodnie z Twoimi regułami.</string>
+    <string name="setup_listener_cta">Otwórz ustawienia</string>
+    <string name="setup_listener_granted">Przyznano</string>
+
+    <string name="setup_battery_title">Wyłącz optymalizację baterii</string>
+    <string name="setup_battery_body">Android usypia aplikacje, aby oszczędzać baterię (Doze). Aby DoNotNotify nadal filtrował w tle, zezwól mu na nieograniczone działanie.</string>
+    <string name="setup_battery_cta">Zezwól na nieograniczone użycie baterii</string>
+    <string name="setup_battery_granted">Dozwolone</string>
+
+    <string name="setup_oem_title">Zezwól na autostart na swoim telefonie</string>
+    <string name="setup_oem_body_generic">Producent Twojego telefonu dodaje dodatkową warstwę ograniczeń dla aplikacji w tle. Naciśnij poniżej, aby otworzyć odpowiedni ekran ustawień i włączyć autostart / aktywność w tle dla DoNotNotify.</string>
+    <string name="setup_oem_body_xiaomi">Xiaomi / MIUI agresywnie zamyka aplikacje w tle. Naciśnij poniżej, aby otworzyć ustawienia Autostartu i włączyć DoNotNotify. Sprawdź też Bateria i wydajność → oszczędzanie baterii aplikacji → Bez ograniczeń.</string>
+    <string name="setup_oem_body_huawei">Huawei / Honor ogranicza aplikacje w tle przez Menedżer telefonu. Naciśnij poniżej, aby otworzyć Zarządzanie uruchamianiem, i włącz automatyczne uruchamianie dla DoNotNotify.</string>
+    <string name="setup_oem_body_oppo">OPPO / ColorOS ogranicza aplikacje w tle. Naciśnij poniżej, aby otworzyć Menedżer uruchamiania i pozwolić DoNotNotify na automatyczne uruchamianie.</string>
+    <string name="setup_oem_body_oneplus">OnePlus domyślnie ogranicza aktywność w tle. Naciśnij poniżej, aby pozwolić DoNotNotify uruchamiać się w tle.</string>
+    <string name="setup_oem_body_vivo">Vivo ogranicza aplikacje w tle. Naciśnij poniżej, aby otworzyć Zarządzanie uruchamianiem w tle i zezwolić DoNotNotify.</string>
+    <string name="setup_oem_body_samsung">Samsung Device Care może usypiać DoNotNotify. Naciśnij poniżej, aby otworzyć ustawienia baterii i oznaczyć DoNotNotify jako Bez ograniczeń (Bateria → Ograniczenia użycia w tle).</string>
+    <string name="setup_oem_body_asus">ASUS Mobile Manager ogranicza aplikacje w tle. Naciśnij poniżej, aby otworzyć menedżer autostartu i włączyć DoNotNotify.</string>
+    <string name="setup_oem_body_letv">Letv ogranicza aplikacje w tle. Naciśnij poniżej, aby otworzyć Zarządzanie autostartem.</string>
+    <string name="setup_oem_body_meizu">Meizu ogranicza aplikacje w tle. Naciśnij poniżej, aby otworzyć ustawienia Bezpieczeństwa.</string>
+    <string name="setup_oem_body_nokia">Nokia używa warstwy oszczędzania energii Evenwell, która może zamknąć DoNotNotify. Naciśnij poniżej, aby dodać go do listy chronionej.</string>
+    <string name="setup_oem_cta">Otwórz ustawienia</string>
+    <string name="setup_oem_done">Zrobione</string>
+    <string name="setup_oem_failed">Nie udało się otworzyć ekranu ustawień. Znajdź ręcznie ustawienia autostartu lub aktywności w tle na swoim telefonie i zezwól DoNotNotify.</string>
+
+    <string name="setup_done_title">Gotowe</string>
+    <string name="setup_done_body">DoNotNotify będzie działać w tle i filtrować powiadomienia. Będziemy okresowo sprawdzać, czy wszystko działa — jeśli Twój telefon zamknie aplikację, otrzymasz powiadomienie, aby to naprawić.</string>
+
+    <!-- Health check notification -->
+    <string name="health_channel_name">Stan usługi</string>
+    <string name="health_channel_description">Powiadamia, gdy DoNotNotify nie działa.</string>
+    <string name="health_notification_title">DoNotNotify nie działa</string>
+    <string name="health_notification_body">Twój telefon zamknął DoNotNotify. Naciśnij, aby ponownie włączyć i sprawdzić ustawienia oszczędzania energii.</string>
+
+    <!-- Main screen -->
+    <string name="service_active">Usługa aktywna</string>
+    <string name="toast_service_enabled">Usługa powiadomień jest włączona</string>
+    <string name="toast_service_disabled">Usługa powiadomień jest wyłączona</string>
+    <string name="toast_rule_added">Reguła dodana</string>
+    <string name="toast_rule_deleted">Reguła usunięta</string>
+    <string name="toast_rule_updated">Reguła zaktualizowana</string>
+    <string name="toast_notification_deleted">Powiadomienie usunięte</string>
+    <string name="toast_history_cleared">Historia wyczyszczona</string>
+    <string name="toast_blocked_history_cleared">Historia blokad wyczyszczona</string>
+    <string name="toast_copied_to_clipboard">Skopiowano do schowka</string>
+    <string name="toast_failed_to_trigger">Nie udało się wykonać akcji</string>
+    <string name="toast_action_unavailable">Akcja powiadomienia jest już niedostępna</string>
+    <string name="toast_stopped_monitoring">Zatrzymano monitorowanie %s</string>
+    <string name="toast_resumed_monitoring">Wznowiono monitorowanie %s</string>
+    <string name="stacks_notifications_containing">Grupuje powiadomienia zawierające:</string>
+    <string name="stack">Grupuj</string>
+    <string name="match_type_contains">Zawiera</string>
+    <string name="match_type_regex">Regex</string>
+    <string name="rule_type_desc_denylist">Blokuje wszystkie powiadomienia pasujące do tej reguły.</string>
+    <string name="rule_type_desc_allowlist">Zezwala tylko na powiadomienia pasujące do tej reguły. Wszystkie inne z tej aplikacji są blokowane.</string>
+    <string name="rule_type_desc_stack">Grupuje pasujące powiadomienia w jedno podsumowanie. Oryginały są odrzucane.</string>
+    <string name="stack_summary_count">Powiadomienia: %d</string>
+    <string name="stack_overflow_more">+%d więcej</string>
+    <string name="stack_warning_notifications_disabled">Grupowanie nieaktywne — powiadomienia dla DoNotNotify są wyłączone. Dotknij, aby włączyć.</string>
+    <string name="stack_warning_channel_disabled">Grupowanie nieaktywne — kanał zgrupowanych powiadomień jest wyłączony. Dotknij, aby włączyć.</string>
+    <string name="setup_post_notif_title">Zezwól DoNotNotify na wysyłanie powiadomień</string>
+    <string name="setup_post_notif_body">Reguły grupowania ponownie publikują zgrupowane powiadomienia w DoNotNotify. Android 13+ wymaga zezwolenia tej aplikacji na wysyłanie powiadomień — w przeciwnym razie grupowanie będzie nieaktywne.</string>
+    <string name="setup_post_notif_cta">Zezwól na powiadomienia</string>
+    <string name="setup_post_notif_granted">Zezwolono</string>
+    <string name="rules_file_too_large">Plik reguł jest za duży.</string>
+    <string name="import_no_rules">Brak reguł do zaimportowania.</string>
+    <string name="imported_rules_some_skipped">Zaimportowano %1$d reguł (pominięto %2$d).</string>
+    <string name="not_applicable">Nie dot.</string>
+    <string name="unknown">Nieznana</string>
+    <string name="stack_channel_group_name">Zgrupowane powiadomienia</string>
+    <string name="stack_channel_name_app_rule">%1$s — reguła %2$s</string>
+    <string name="stack_channel_name_unnamed">Reguła grupowania %1$s</string>
+    <string name="rule_name_optional">Nazwa reguły (opcjonalnie)</string>
+    <string name="rule_name_supporting">Używana jako nazwa kanału powiadomień, dzięki czemu możesz ustawić jego dźwięk i wibracje.</string>
+    <string name="rule_name_use_suggestion">Użyj „%1$s”</string>
+    <string name="rule_sound_vibration">Dźwięk i wibracje</string>
+    <string name="rule_sound_vibration_desc">Skonfiguruj w ustawieniach systemu</string>
+</resources>

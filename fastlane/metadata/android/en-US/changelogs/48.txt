@@ -1,0 +1,2 @@
+• Build: removed an unused AppIcons.zip archive from the repository (flagged by the F-Droid scanner)
+• Build: pinned the Gradle wrapper to 8.13 with a verified distribution SHA-256 and fixed a wrapper version mismatch

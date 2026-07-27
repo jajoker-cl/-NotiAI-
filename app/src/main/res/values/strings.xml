@@ -1,0 +1,260 @@
+<resources>
+    <string name="app_name">DoNotNotify</string>
+
+    <!-- Tabs -->
+    <string name="tab_history">History (%d)</string>
+    <string name="tab_rules">Rules (%d)</string>
+    <string name="tab_blocked">Blocked (%d)</string>
+
+    <!-- Common actions -->
+    <string name="cancel">Cancel</string>
+    <string name="clear">Clear</string>
+    <string name="close">Close</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="add">Add</string>
+    <string name="ok">Ok</string>
+    <string name="open">Open</string>
+    <string name="resume">Resume</string>
+    <string name="stop">Stop</string>
+    <string name="got_it">Got it</string>
+    <string name="back">Back</string>
+    <string name="export">Export</string>
+    <string name="import_rules">Import</string>
+    <string name="settings">Settings</string>
+    <string name="about">About</string>
+
+    <!-- Search -->
+    <string name="search">Search</string>
+    <string name="clear_search">Clear search</string>
+    <string name="search_notifications">Search notifications…</string>
+    <string name="search_apps">Search apps…</string>
+
+    <!-- History screen -->
+    <string name="no_notifications_yet">No Notifications Yet</string>
+    <string name="no_notifications_yet_desc">Notifications from your apps will appear here.</string>
+    <string name="no_results_found">No Results Found</string>
+    <string name="no_results_found_desc">No notifications match your search query. Try a different search term.</string>
+    <string name="clear_history">Clear History</string>
+    <string name="clear_history_title">Clear History?</string>
+    <string name="clear_history_confirm">Are you sure you want to clear all notification history?</string>
+    <string name="reset">Reset</string>
+    <string name="reset_hit_counters">Reset Hit Counters</string>
+    <string name="reset_hit_counters_title">Reset Hit Counters?</string>
+    <string name="reset_hit_counters_confirm">Are you sure you want to reset the hit count for all rules to zero?</string>
+    <string name="toast_hit_counters_reset">Hit counters reset</string>
+    <string name="stop_monitoring_title">Stop Monitoring?</string>
+    <string name="stop_monitoring_confirm">Are you sure you want to stop monitoring %s? You can resume monitoring later from the Unmonitored Apps section.</string>
+    <string name="stop_monitoring_app">Stop monitoring %s</string>
+    <string name="unmonitored_apps">Unmonitored Apps (%d)</string>
+    <string name="ongoing_notification_cannot_block">This was an ongoing notification. It may not be possible to block it.</string>
+    <string name="collapse">Collapse</string>
+    <string name="expand">Expand</string>
+
+    <!-- Notification labels in list cards -->
+    <string name="notification_title_prefix">Title: %s</string>
+    <string name="notification_text_prefix">Text: %s</string>
+
+    <!-- Ongoing notification icon -->
+    <string name="ongoing_notification">Ongoing Notification</string>
+    <string name="time_limited_rule">Time limited rule</string>
+
+    <!-- Rules screen -->
+    <string name="no_rules_created">No Rules Created</string>
+    <string name="no_rules_created_desc">Create rules to automatically block unwanted notifications. Tap a notification in the History tab to create a rule, or browse pre-built rules.</string>
+    <string name="rules_auto_block_desc">Notifications matching the rules below are handled automatically according to each rule.</string>
+    <string name="rules_master_switch_label">All rules active</string>
+    <string name="how_to_add_rule">How to Add a New Rule</string>
+    <string name="how_to_add_rule_desc">To create a new rule:\n\n1. Switch to the \"History\" tab\n2. Find a notification you want a rule for\n3. Tap on the notification\n4. Select \"Create Rule\" from the options\n5. Customize the rule settings as needed\n\nThe rule will then appear here and apply to matching notifications automatically.</string>
+    <string name="add_new_rule">Add a New Rule</string>
+    <string name="browse_prebuilt_rules">Browse Pre-built Rules</string>
+    <string name="hits_count">Hits: %d</string>
+    <string name="no_hits">No hits</string>
+
+    <!-- Blocked screen -->
+    <string name="no_blocked_notifications">No Blocked Notifications</string>
+    <string name="no_blocked_notifications_desc">Notifications blocked by your rules will appear here. Create rules in the Rules tab to start blocking unwanted notifications.</string>
+    <string name="clear_blocked_history">Clear Blocked History</string>
+    <string name="clear_blocked_history_title">Clear Blocked History?</string>
+    <string name="clear_blocked_history_confirm">Are you sure you want to clear all blocked notification history?</string>
+    <string name="ongoing_notification_partially_blocked">This was an ongoing notification. It may not have been fully blocked.</string>
+    <string name="delete_blocked_notification">Delete Blocked Notification</string>
+
+    <!-- Pre-built rules screen -->
+    <string name="prebuilt_rules">Pre-built Rules</string>
+    <string name="prebuilt_rules_desc">Add pre-configured rules for apps you have installed. These rules block common promotional and engagement notifications.</string>
+    <string name="no_rules_match_search">No rules match your search</string>
+    <string name="try_different_search">Try a different search term</string>
+    <string name="no_new_prebuilt_rules">No new pre-built rules available</string>
+    <string name="all_rules_added">You\'ve already added all available rules for your installed apps, or no supported apps are installed.</string>
+    <string name="blocks_notifications_containing">Blocks notifications containing:</string>
+    <string name="allows_only_notifications_containing">Allows only notifications containing:</string>
+    <string name="stacks_notifications_containing">Stacks notifications containing:</string>
+    <string name="denylist">Denylist</string>
+    <string name="allowlist">Allowlist</string>
+    <string name="stack">Stack</string>
+    <string name="match_type_contains">Contains</string>
+    <string name="match_type_regex">Regex</string>
+    <string name="rule_type_desc_denylist">Block all notifications matching this rule.</string>
+    <string name="rule_type_desc_allowlist">Only allow notifications matching this rule. All others from this app are blocked.</string>
+    <string name="rule_type_desc_stack">Group matching notifications into one summary. The originals are dismissed.</string>
+
+    <!-- Stacked notifications -->
+    <string name="stack_summary_count">%d notifications</string>
+    <string name="stack_overflow_more">+%d more</string>
+    <string name="stack_warning_notifications_disabled">Stacking inactive — notifications are turned off for DoNotNotify. Tap to enable.</string>
+    <string name="stack_warning_channel_disabled">Stacking inactive — the stacked-notifications channel is disabled. Tap to enable.</string>
+    <string name="unknown_app">Unknown</string>
+
+    <!-- Enable notification listener screen -->
+    <string name="notifications_off">Notifications Off</string>
+    <string name="permission_required">Permission Required</string>
+    <string name="permission_required_desc">This app needs access to your notifications to block them. Please enable the access in your device settings.</string>
+    <string name="enable_notification_access">Enable Notification Access</string>
+
+    <!-- Settings screen -->
+    <string name="history_retention_days">History Retention (Days):</string>
+    <string name="export_import_rules">Export/Import Rules</string>
+    <string name="choose_action">Choose an action</string>
+    <string name="support_this_app">Donate &amp; Support</string>
+    <string name="report_an_issue">Report an Issue</string>
+    <string name="app_version">DoNotNotify v%s</string>
+    <!-- Settings sections and descriptions -->
+    <string name="settings_section_general">General</string>
+    <string name="settings_section_rules">Rules &amp; Data</string>
+    <string name="settings_section_about">Support &amp; About</string>
+    <string name="history_retention">History retention</string>
+    <string name="history_retention_desc">Notifications older than this are deleted automatically</string>
+    <string name="days_unit">days</string>
+    <string name="export_import_rules_desc">Back up your rules to a file or restore them</string>
+    <string name="reset_hit_counters_desc">Set every rule\'s hit count back to zero</string>
+    <string name="support_this_app_desc">Help keep DoNotNotify free and ad-free</string>
+    <string name="report_an_issue_desc">Report a bug or request a feature</string>
+    <string name="about_desc">App version, licenses and more</string>
+    <string name="status">Status</string>
+    <string name="rules_exported_successfully">Rules exported successfully.</string>
+    <string name="failed_to_export_rules">Failed to export rules: %s</string>
+    <string name="successfully_imported_rules">Successfully imported %d rules.</string>
+    <string name="invalid_rules_file">Invalid rules file: Could not parse rules.</string>
+    <string name="invalid_rules_file_schema">Invalid rules file: Schema mismatch.</string>
+    <string name="failed_to_import_rules">Failed to import rules: %s</string>
+    <string name="rules_file_too_large">Rules file is too large.</string>
+    <string name="import_no_rules">No rules to import.</string>
+    <string name="imported_rules_some_skipped">Imported %1$d rules (%2$d skipped).</string>
+
+    <!-- Rule dialogs -->
+    <string name="advanced_configuration">Advanced Configuration</string>
+    <string name="enable_rule">Enable Rule</string>
+    <string name="enable_time_limit">Enable Time Limit</string>
+    <string name="start_time">Start Time:</string>
+    <string name="end_time">End Time:</string>
+    <string name="title_filter_optional">Title Filter (Optional)</string>
+    <string name="text_filter_optional">Text Filter (Optional)</string>
+    <string name="save_rule">Save Rule</string>
+    <string name="add_rule_title">Add New Rule (%s)</string>
+    <string name="edit_rule_title">Edit Rule (%s)</string>
+    <string name="rule_for">Rule for %s</string>
+    <string name="blocked_notification_from">Blocked notification from %s</string>
+
+    <!-- Delete confirmation dialog -->
+    <string name="delete_item_title">Delete Item?</string>
+    <string name="delete_item_confirm">Are you sure you want to delete this item?\n\n%s</string>
+
+    <!-- Notification details dialogs -->
+    <string name="notification_details">Notification Details</string>
+    <string name="label_app">App:</string>
+    <string name="label_title">Title:</string>
+    <string name="label_text">Text:</string>
+    <string name="label_time">Time:</string>
+    <string name="create_rule">Create Rule</string>
+    <string name="view_rule">View Rule</string>
+
+    <!-- Auto-added rules dialog -->
+    <string name="rules_added_automatically">Rules Added Automatically</string>
+    <string name="rules_added_automatically_desc">We found the following apps on your device and added blocker rules for them:</string>
+    <string name="and_more">+ %d more</string>
+    <string name="do_not_show_again">Do Not Show Again</string>
+
+    <!-- About dialog -->
+    <string name="about_app">App: %s</string>
+    <string name="about_version">Version: %s</string>
+    <string name="about_developer">Developer: %s</string>
+
+    <!-- Setup wizard -->
+    <string name="setup_skip">Skip</string>
+    <string name="setup_next">Next</string>
+    <string name="setup_back">Back</string>
+    <string name="setup_finish">Finish</string>
+    <string name="setup_done_check">Done</string>
+    <string name="setup_step_indicator">Step %1$d of %2$d</string>
+
+    <string name="setup_welcome_title">Keep DoNotNotify alive</string>
+    <string name="setup_welcome_body">Some Android phones aggressively shut down background apps to save battery — which would silently stop notification blocking. The next steps protect this app from being killed.</string>
+    <string name="setup_welcome_cta">Get started</string>
+
+    <string name="setup_listener_title">Grant notification access</string>
+    <string name="setup_listener_body">DoNotNotify needs access to your notifications so it can filter and block them according to your rules.</string>
+    <string name="setup_listener_cta">Open settings</string>
+    <string name="setup_listener_granted">Granted</string>
+
+    <string name="setup_battery_title">Disable battery optimization</string>
+    <string name="setup_battery_body">Android puts apps to sleep to save battery (Doze). For DoNotNotify to keep filtering in the background, please allow it to run unrestricted.</string>
+    <string name="setup_battery_cta">Allow unrestricted battery</string>
+    <string name="setup_battery_granted">Allowed</string>
+
+    <string name="setup_oem_title">Allow autostart on your phone</string>
+    <string name="setup_oem_body_generic">Your phone\'s manufacturer adds an extra layer of background app restrictions. Tap below to open the relevant settings screen and enable autostart / background activity for DoNotNotify.</string>
+    <string name="setup_oem_body_xiaomi">Xiaomi / MIUI aggressively kills background apps. Tap below to open Autostart settings, then enable DoNotNotify. Also check Battery &amp; performance → app battery saver → No restrictions.</string>
+    <string name="setup_oem_body_huawei">Huawei / Honor restricts background apps via Phone Manager. Tap below to open Startup management, then turn on Auto-launch for DoNotNotify.</string>
+    <string name="setup_oem_body_oppo">OPPO / ColorOS restricts background apps. Tap below to open Startup manager, then allow DoNotNotify to start automatically.</string>
+    <string name="setup_oem_body_oneplus">OnePlus restricts background activity by default. Tap below to allow DoNotNotify to launch in the background.</string>
+    <string name="setup_oem_body_vivo">Vivo restricts background apps. Tap below to open Background startup management, then allow DoNotNotify.</string>
+    <string name="setup_oem_body_samsung">Samsung\'s Device Care can put DoNotNotify to sleep. Tap below to open Battery settings, then mark DoNotNotify as Unrestricted (Battery → Background usage limits).</string>
+    <string name="setup_oem_body_asus">ASUS Mobile Manager restricts background apps. Tap below to open Auto-start manager and enable DoNotNotify.</string>
+    <string name="setup_oem_body_letv">Letv restricts background apps. Tap below to open Autoboot management.</string>
+    <string name="setup_oem_body_meizu">Meizu restricts background apps. Tap below to open Security settings.</string>
+    <string name="setup_oem_body_nokia">Nokia uses an Evenwell power-saving layer that can kill DoNotNotify. Tap below to add it to the protected list.</string>
+    <string name="setup_oem_cta">Open settings</string>
+    <string name="setup_oem_done">I\'ve done this</string>
+    <string name="setup_oem_failed">Couldn\'t open the settings screen. Please find the autostart or background-activity settings on your phone manually and allow DoNotNotify.</string>
+
+    <string name="setup_post_notif_title">Allow DoNotNotify to post notifications</string>
+    <string name="setup_post_notif_body">Stack rules re-post grouped notifications under DoNotNotify. Android 13+ requires you to allow this app to post notifications, or stacking will be inactive.</string>
+    <string name="setup_post_notif_cta">Allow notifications</string>
+    <string name="setup_post_notif_granted">Allowed</string>
+
+    <string name="setup_done_title">All set</string>
+    <string name="setup_done_body">DoNotNotify will run in the background and filter notifications. We\'ll periodically check that everything is still working — if your phone shuts the app down, you\'ll get a notification to fix it.</string>
+
+    <!-- Health check notification -->
+    <string name="health_channel_name">Service health</string>
+    <string name="health_channel_description">Alerts you when DoNotNotify isn\'t running.</string>
+    <string name="health_notification_title">DoNotNotify isn\'t running</string>
+    <string name="health_notification_body">Your phone shut DoNotNotify down. Tap to re-enable it and review power-saving settings.</string>
+
+    <!-- Main screen -->
+    <string name="service_active">Service Active</string>
+    <string name="toast_service_enabled">Notification service is enabled</string>
+    <string name="toast_service_disabled">Notification service is disabled</string>
+    <string name="toast_rule_added">Rule added</string>
+    <string name="toast_rule_deleted">Rule deleted</string>
+    <string name="toast_rule_updated">Rule updated</string>
+    <string name="toast_notification_deleted">Notification deleted</string>
+    <string name="toast_history_cleared">History cleared</string>
+    <string name="toast_blocked_history_cleared">Blocked history cleared</string>
+    <string name="toast_copied_to_clipboard">Copied to clipboard</string>
+    <string name="toast_failed_to_trigger">Failed to trigger action</string>
+    <string name="toast_action_unavailable">Notification action is no longer available</string>
+    <string name="toast_stopped_monitoring">Stopped monitoring %s</string>
+    <string name="toast_resumed_monitoring">Resumed monitoring %s</string>
+    <string name="not_applicable">N/A</string>
+    <string name="unknown">Unknown</string>
+    <string name="stack_channel_group_name">Stacked notifications</string>
+    <string name="stack_channel_name_app_rule">%1$s — rule %2$s</string>
+    <string name="stack_channel_name_unnamed">Stack rule %1$s</string>
+    <string name="rule_name_optional">Rule name (optional)</string>
+    <string name="rule_name_supporting">Used as the notification channel name, so you can set its sound and vibration.</string>
+    <string name="rule_name_use_suggestion">Use “%1$s”</string>
+    <string name="rule_sound_vibration">Sound and vibration</string>
+    <string name="rule_sound_vibration_desc">Configure in system settings</string>
+</resources>
