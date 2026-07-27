@@ -44,6 +44,19 @@ object AiLogStorage {
     }
 
     fun clear(ctx: Context) {
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().remove(KEY_LOG).apply()
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().remove(KEY_LOG).remove("reviewed").apply()
+    }
+
+    fun isReviewed(ctx: Context, idx: Int): Boolean {
+        val set = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getStringSet("reviewed", emptySet()) ?: emptySet()
+        return set.contains(idx.toString())
+    }
+
+    fun markReviewed(ctx: Context, idx: Int) {
+        val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val set = (prefs.getStringSet("reviewed", emptySet()) ?: emptySet()).toMutableSet()
+        set.add(idx.toString())
+        prefs.edit().putStringSet("reviewed", set).apply()
     }
 }

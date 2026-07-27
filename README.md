@@ -1,68 +1,98 @@
-# NotiAI - 智能通知过滤 (DoNotNotify AI版)
+# NotiAI - 智能通知过滤 🛡️
 
+> 基于 DeepSeek AI 的 Android 智能通知过滤器。让你的手机只响重要的，不响垃圾的。
+
+[![Version](https://img.shields.io/badge/version-5.21.8-blue)](https://github.com/jajoker-cl/-NotiAI-/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Android](https://img.shields.io/badge/Android-8.0%2B-green)](https://developer.android.com)
 
-> 📱 基于DeepSeek AI的Android智能通知过滤器 | AI-powered Android notification filter
+---
 
-基于 [DoNotNotify](https://github.com/anujja/DoNotNotify) 二次开发，新增 **DeepSeek AI 智能判断** 功能，让AI帮你决定哪些通知值得响铃。
+## ☕ 支持开发者
 
-Built on [DoNotNotify](https://github.com/anujja/DoNotNotify) with added **DeepSeek AI** integration for intelligent notification filtering.
+如果这个App帮你省下了被垃圾通知轰炸的时间，欢迎请我喝杯咖啡：
+
+<p align="center">
+  <img src="donate_qr.png" width="200" alt="收款码">
+</p>
+
+（扫码捐赠，金额随意，感谢支持！）
 
 ---
 
-## ✨ 功能特点 | Features
+## 📖 中文说明
 
-### 🆕 AI智能过滤 (新增)
-- **DeepSeek AI 接管** — 开启AI模式后，所有通知由DeepSeek判断重要性
-- **一句话调教** — 对AI说"银行扣款、快递到了、验证码这些放行"，AI自动理解
-- **AI日志查看** — 每条通知的处理过程全记录（来了什么 → AI判断 → 拦截还是放行）
-- **纠错反馈** — 点一条日志标记"判断错误"，AI下次会更准
+### 它解决什么问题？
 
-### 📋 原版规则引擎 (保留)
-- **通知拦截** — 基于NotificationListenerService实时过滤
-- **灵活规则** — 黑名单/白名单/堆叠三种模式
-- **关键词匹配** — 支持标题/正文关键词和正则表达式
-- **时间规则** — 指定时间段生效
-- **预置规则** — 40+常用App预置规则
-- **完全离线** — 不需要网络权限（AI模式除外）
+你是否整天开着静音/免打扰，又怕错过重要消息？NotiAI 帮你解决这个两难：
 
----
+- 🔇 **默认全静音** — 所有通知来了先不出声
+- 🤖 **DeepSeek AI 判断** — AI 分析每条通知是否重要
+- 🔊 **重要才响** — 银行扣款、快递取件、验证码、家人消息 → 放行响铃
+- 🚫 **垃圾静默** — 广告推送、促销信息、无关通知 → 直接拦截
 
-## 📥 下载 | Download
+### 怎么用？
 
-[📦 下载最新APK](https://github.com/jajoker-cl/-NotiAI-/releases)
+**第一步：开启AI模式**
+1. 安装后给「通知使用权」权限
+2. 设置 → AI智能过滤 → 填入 DeepSeek API Key（[免费获取](https://platform.deepseek.com)）
+3. 打开「启用AI模式」开关
 
-或从 [Releases](https://github.com/jajoker-cl/-NotiAI-/releases) 页面下载
+**第二步：训练AI（关键！）**
+1. 去主页「AI评判」标签查看AI的判断记录
+2. 判断对的点 ✅，判断错的点 ❌ 并告诉AI哪里错了
+3. 积累几天纠错数据后，点「生成规则」
 
----
+**第三步：切换规则引擎**
+- AI生成规则后，可以关闭AI模式
+- 规则引擎以 <1ms 速度本地拦截，不吃流量不耗API
+- 规则引擎拦截的通知，AI还会在后台校验——如果AI觉得不该拦，会自动恢复并弹窗提醒你
 
-## ⚙️ AI模式使用 | Setup
+### 架构逻辑
 
-1. 安装后给 **通知使用权** 权限
-2. 进入 **设置 → AI智能过滤**
-3. 填入你的 **DeepSeek API Key**（[获取地址](https://platform.deepseek.com)）
-4. 打开 **启用AI模式** 开关
-5. 在"对AI说句话"里写你的偏好，例如：`银行交易、快递物流、验证码、家人消息放行，其余拦截`
-
-AI日志可在设置页查看，点❌可纠错反馈。
-
----
-
-## 🛠 编译 | Build
-
-```bash
-git clone https://github.com/jajoker-cl/-NotiAI-.git
-cd 项目目录
-./gradlew assembleDebug
+```
+通知到达 → AI模式/AI+规则模式 → 判断 → 拦截/放行
+                ↓
+         AI评判页面 → 用户✅❌纠错 → AI学习优化
+                ↓
+         积累足够数据 → 点击「生成规则」 → 规则库
+                ↓
+         关闭AI模式 → 纯本地 <1ms 闪电拦截
 ```
 
-APK输出: `app/build/outputs/apk/debug/app-debug.apk`
+### 隐私
 
-**开发环境:**
-- Android Studio + JDK 21
-- Gradle 8.13
-- Kotlin 2.0 + Jetpack Compose
+- AI模式需要联网调用DeepSeek API
+- 规则模式完全离线，数据不出手机
+- 不收集任何个人信息
+
+---
+
+## 📖 English
+
+### What it does
+
+NotiAI uses DeepSeek AI to intelligently filter Android notifications:
+
+- All notifications are evaluated by AI
+- Important ones (banking, delivery, verification codes, family messages) → let through
+- Spam (ads, promotions, irrelevant) → blocked silently
+
+### How to use
+
+1. Enable notification access
+2. Go to Settings → AI Filter → enter your DeepSeek API Key
+3. Turn on AI mode
+4. Review AI decisions in the "AI Judgement" tab, mark correct/incorrect
+5. After accumulating data, click "Generate Rules" to create local rules
+6. Switch to rule engine for <1ms local filtering
+
+### Architecture
+
+- **AI Mode**: DeepSeek cloud AI judges notifications (~1-2s)
+- **Rule Engine**: Local keyword matching (<1ms)
+- **AI Validation**: AI re-checks rule engine decisions, alerts you on conflicts
+- **AI Rule Generation**: AI learns from your feedback and auto-generates rules
 
 ---
 
@@ -70,9 +100,10 @@ APK输出: `app/build/outputs/apk/debug/app-debug.apk`
 
 | 角色 | 贡献者 |
 |------|--------|
-| **原作者** | [Anuj Jain](https://github.com/anujja) — DoNotNotify 原版 |
-| **AI功能开发** | [jajoker-cl](https://github.com/jajoker-cl) — DeepSeek集成、AI日志、纠错系统 |
-| **原版仓库** | [github.com/anujja/DoNotNotify](https://github.com/anujja/DoNotNotify) |
+| **原作者** | [Anuj Jain](https://github.com/anujja) — DoNotNotify 原始版本 |
+| **AI功能开发** | [jajoker-cl](https://github.com/jajoker-cl) — DeepSeek集成、AI评判、规则生成 |
+
+原版仓库：[github.com/anujja/DoNotNotify](https://github.com/anujja/DoNotNotify)
 
 ---
 

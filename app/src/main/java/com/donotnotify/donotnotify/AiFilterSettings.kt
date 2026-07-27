@@ -44,4 +44,17 @@ object AiFilterSettings {
 
     fun getFeedback(ctx: Context): List<String> =
         (prefs(ctx).getStringSet(KEY_FEEDBACK_PREFIX + "data", mutableSetOf()) ?: mutableSetOf()).toList()
+
+    fun getObservationDays(ctx: Context): Int = prefs(ctx).getInt("obs_days", 3)
+    fun setObservationDays(ctx: Context, d: Int) = prefs(ctx).edit().putInt("obs_days", d).apply()
+    fun markAiStartTime(ctx: Context) {
+        if (prefs(ctx).getLong("ai_start", 0L) == 0L)
+            prefs(ctx).edit().putLong("ai_start", System.currentTimeMillis()).apply()
+    }
+    fun isObservationPeriod(ctx: Context): Boolean {
+        val s = getAiStartTime(ctx)
+        val d = getObservationDays(ctx)
+        return s == 0L || System.currentTimeMillis() - s < d * 24L * 60 * 60 * 1000
+    }
+    private fun getAiStartTime(ctx: Context): Long = prefs(ctx).getLong("ai_start", 0L)
 }

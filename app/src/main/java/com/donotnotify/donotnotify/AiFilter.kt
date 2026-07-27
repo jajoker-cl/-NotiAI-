@@ -25,13 +25,33 @@ object AiFilter {
 
     private var lastResult: AiResult? = null
 
+    // SMS预判断缓存：SmsInterceptor提前调API，NotificationBlockerService直接用
+    private val smsCache = LinkedHashMap<String, AiResult>(10, 0.75f, true)
+    private const val CACHE_TTL_MS = 30_000L // 30秒有效
+
     data class AiResult(val shouldBlock: Boolean, val reason: String)
 
     /**
      * 同步调用（在后台线程执行）
      * @return null=API调用失败，非null=判断结果
      */
+    /**
+     * 非阻塞预判断（SmsInterceptor调用）：后台线程调API，结果缓存
+     */
+    fun preWarm(ctx: Context, packageName: String, title: String?, text: String?) {
+        Thread {
+            decide(ctx, packageName, title, text)
+        }.start()
+    }
+
     fun decide(ctx: Context, packageName: String, title: String?, text: String?): AiResult? {
+        // 检查SMS缓存
+        val cacheKey = "$packageName|${title}|${text}"
+        val cached = smsCache[cacheKey]
+        if (cached != null) {
+            smsCache.remove(cacheKey)
+            return cached
+        }
         val apiKey = AiFilterSettings.getApiKey(ctx)
         if (apiKey.isBlank()) return AiResult(shouldBlock = false, reason = "未配置API Key")
 
@@ -75,8 +95,10 @@ object AiFilter {
 
             // 解析DeepSeek返回的JSON
             val result = parseResponse(responseBody)
-            if (result == null) return AiResult(shouldBlock = false, reason = "JSON解析失败: ${responseBody.take(80)}")
-            return result
+            val finalResult = result ?: AiResult(shouldBlock = false, reason = "JSON解析失败: ${responseBody.take(80)}")
+            // 缓存结果（SMS预判断用）
+            smsCache[cacheKey] = finalResult
+            return finalResult
 
         } catch (e: IOException) {
             Log.e(TAG, "Network error: ${e.javaClass.simpleName} - ${e.message}")

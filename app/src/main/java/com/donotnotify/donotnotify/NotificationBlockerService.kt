@@ -135,23 +135,43 @@ class NotificationBlockerService : NotificationListenerService() {
         // the locale is unchanged).
         PrebuiltRuleReconciler.reconcileIfLocaleChanged(this)
 
-        // ★ AI模式：DeepSeek API判断，比规则引擎优先
+        // ★ AI模式：同步判断（和原规则引擎一样，拦截在声音播放之前）
         if (AiFilterSettings.isAiModeEnabled(this)) {
             val apiKey = AiFilterSettings.getApiKey(this)
             if (apiKey.isNotBlank()) {
-                // 在后台线程调API，不阻塞通知线程
-                val aiBlocked = runBlockingHelper(title, text, packageName)
-                if (aiBlocked) {
+                // 没有标题也没有内容的通知（纯图标），不浪费API，直接放行
+                if (title.isNullOrBlank() && text.isNullOrBlank()) {
+                    Log.d(TAG, "Skip AI: empty notification from $packageName")
+                } else {
+                val startTime = System.currentTimeMillis()
+                // 后台线程调API，主线程等结果（最多5秒）
+                var blocked = false
+                var reason = "异常-默认放行"
+                try {
+                    val future = java.util.concurrent.CompletableFuture.supplyAsync {
+                        AiFilter.decide(this@NotificationBlockerService, packageName, title, text)
+                    }
+                    val result = future.get(3, TimeUnit.SECONDS)
+                    blocked = result?.shouldBlock ?: false
+                    reason = result?.reason ?: reason
+                } catch (e: Exception) {
+                    Log.w(TAG, "AI timeout/error: ${e.message}")
+                    reason = "超时/异常-放行"
+                }
+                val duration = System.currentTimeMillis() - startTime
+                AiLogStorage.addLog(this, packageName, title, text, reason, blocked, duration)
+
+                if (blocked) {
                     cancelNotification(sbn.key)
                     historyExecutor.execute {
-                        blockedNotificationHistoryStorage.saveNotification(
-                            SimpleNotification(appLabel, packageName, title, text, currentTime, wasOngoing = false)
-                        )
+                        val sn = SimpleNotification(appLabel, packageName, title, text, currentTime, wasOngoing = false)
+                        blockedNotificationHistoryStorage.saveNotification(sn)
                         statsStorage.incrementBlockedNotificationsCount()
                         sendBroadcast(Intent(ACTION_HISTORY_UPDATED))
                     }
                     return
                 }
+                } // end if-else empty check
                 // AI说放行，继续往下走正常流程
             }
         }
@@ -176,6 +196,50 @@ class NotificationBlockerService : NotificationListenerService() {
             }
             Log.i(TAG, "Blocking notification from $packageName. Matched rule: $matchedRule")
             cancelNotification(sbn.key)
+            // ★ AI校验层：规则拦截后，AI后台复查
+            // 非AI模式（纯规则模式）下也运行，因为规则可能是AI生成的
+            if (AiFilterSettings.isAiModeEnabled(this) || AiFilterSettings.getApiKey(this).isNotBlank()) {
+                val ruleBlockedPkg = packageName
+                val ruleBlockedTitle = title
+                val ruleBlockedText = text
+                val ruleBlockedLabel = appLabel.toString()
+                val ruleBlockedKey = sbn.key
+                historyExecutor.execute {
+                    try {
+                        val aiCheck = AiFilter.decide(this@NotificationBlockerService, ruleBlockedPkg, ruleBlockedTitle, ruleBlockedText)
+                        // AI说应该放行，但规则拦截了 → 重新放出来
+                        if (aiCheck != null && !aiCheck.shouldBlock) {
+                            Log.w(TAG, "AI disagrees with rule: re-posting $ruleBlockedPkg")
+                            // 重新发通知
+                            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                            val chId = "ai_conflict"
+                            val ch = android.app.NotificationChannel(chId, "拦截存疑", android.app.NotificationManager.IMPORTANCE_HIGH)
+                            nm.createNotificationChannel(ch)
+                            val restored = android.app.Notification.Builder(this@NotificationBlockerService, chId)
+                                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                                .setContentTitle(ruleBlockedTitle ?: ruleBlockedLabel)
+                                .setContentText(ruleBlockedText ?: "")
+                                .setAutoCancel(true)
+                                .build()
+                            nm.notify(ruleBlockedKey.hashCode(), restored)
+                            // 发系统通知提醒用户
+                            val alertMsg = "规则拦截了[" + ruleBlockedLabel + "]的通知，AI认为应该放行。请打开App查看详情。"
+                            val alertN = android.app.Notification.Builder(this@NotificationBlockerService, chId)
+                                .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                                .setContentTitle("NotiAI - 拦截存疑")
+                                .setContentText(alertMsg)
+                                .setAutoCancel(true)
+                                .setPriority(android.app.Notification.PRIORITY_HIGH)
+                                .build()
+                            nm.notify(("ai_conflict_" + ruleBlockedKey).hashCode(), alertN)
+                            // 记录冲突
+                            AiLogStorage.addLog(this@NotificationBlockerService, ruleBlockedPkg, "⚠冲突", "${ruleBlockedTitle} | ${ruleBlockedText}", "AI认为应放行-已恢复", false, 0)
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "AI validation error", e)
+                    }
+                }
+            }
         } else if (decision.shouldStack) {
             // STACK: post the replacement FIRST; only cancel the source if the
             // re-post succeeded (post-then-cancel — never lose a notification).
@@ -327,27 +391,13 @@ class NotificationBlockerService : NotificationListenerService() {
         }
     }
 
-    /**
-     * AI判断辅助：在后台线程调DeepSeek API，阻塞当前线程等待结果
-     */
-    private fun runBlockingHelper(title: String?, text: String?, packageName: String): Boolean {
-        val startTime = System.currentTimeMillis()
-        return try {
-            val future = java.util.concurrent.CompletableFuture.supplyAsync {
-                AiFilter.decide(this, packageName, title, text)
+    private fun saveAppInfoIfNeeded(packageName: String, appLabel: CharSequence) {
+        try {
+            if (appInfoStorage.isAppInfoSaved(packageName) == null || appInfoStorage.isAppInfoSaved(packageName) == packageName) {
+                // Skipping icon save for now - we already have the icon from earlier notification
             }
-            val result = future.get(8, TimeUnit.SECONDS) // 最多等8秒
-            val blocked = result?.shouldBlock ?: false
-            val reason = result?.reason ?: "AI无响应"
-            val duration = System.currentTimeMillis() - startTime
-            // ★ 记录日志
-            AiLogStorage.addLog(this, packageName, title, text, reason, blocked, duration)
-            blocked
         } catch (e: Exception) {
-            val duration = System.currentTimeMillis() - startTime
-            AiLogStorage.addLog(this, packageName, title, text, "超时/异常: ${e.message}", false, duration)
-            Log.w(TAG, "AI filter timeout/error, fallback to allow", e)
-            false // 超时或出错放行，不丢通知
+            Log.w(TAG, "Failed to save app info", e)
         }
     }
 

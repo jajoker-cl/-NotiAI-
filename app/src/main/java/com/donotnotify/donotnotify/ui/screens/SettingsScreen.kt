@@ -325,7 +325,7 @@ fun SettingsScreen(
                 SettingsRow(
                     icon = Icons.Filled.BugReport,
                     title = "启用AI模式",
-                    subtitle = "开启后由DeepSeek AI判断通知重要性，规则引擎暂时失效",
+                    subtitle = "DeepSeek AI判断通知重要性。规则引擎同时运行，AI会校验规则是否误判",
                     trailing = {
                         Switch(
                             checked = aiEnabled,
@@ -333,12 +333,36 @@ fun SettingsScreen(
                                 aiEnabled = enabled
                                 AiFilterSettings.setAiModeEnabled(context, enabled)
                                 if (enabled) {
-                                    Toast.makeText(context, "AI模式已开启，DeepSeek将接管通知判断", Toast.LENGTH_SHORT).show()
+                                    AiFilterSettings.markAiStartTime(context)
+                                    Toast.makeText(context, "AI模式已开启，DeepSeek将从现在开始判断通知。前${AiFilterSettings.getObservationDays(context)}天为学习期，建议多去AI评判页面纠错", Toast.LENGTH_LONG).show()
                                 } else {
                                     Toast.makeText(context, "AI模式已关闭，恢复规则引擎", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         )
+                    }
+                )
+                RowDivider()
+                // 观察期天数
+                var obsDays by remember { mutableStateOf(AiFilterSettings.getObservationDays(context).toString()) }
+                SettingsRow(
+                    icon = Icons.Filled.History,
+                    title = "学习期天数",
+                    subtitle = "AI会正常拦截，建议在此期间多去AI评判页面纠错优化",
+                    trailing = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            TextButton(onClick = {
+                                val d = (obsDays.toIntOrNull() ?: 3) - 1
+                                if (d >= 1) { obsDays = d.toString(); AiFilterSettings.setObservationDays(context, d) }
+                            }) { Text("－") }
+                            Text(obsDays, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                            TextButton(onClick = {
+                                val d = (obsDays.toIntOrNull() ?: 3) + 1
+                                if (d <= 7) { obsDays = d.toString(); AiFilterSettings.setObservationDays(context, d) }
+                            }) { Text("＋") }
+                            Text("天", style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
                 )
                 RowDivider()
@@ -387,25 +411,46 @@ fun SettingsScreen(
                         minLines = 2
                     )
                 }
-                RowDivider()
-                // ★ 查看AI日志
-                SettingsRow(
-                    icon = Icons.Filled.BugReport,
-                    title = "查看AI拦截日志",
-                    subtitle = "每条通知的处理过程和AI判断结果",
-                    onClick = { showAiLogs = true },
-                    trailing = { NavChevron() }
-                )
             }
+
+            var showReportChoice by remember { mutableStateOf(false) }
 
             SettingsSection(title = stringResource(R.string.settings_section_about)) {
                 SettingsRow(
                     icon = Icons.Filled.BugReport,
-                    title = "报告问题 / 报告问题",
-                    subtitle = "原作者 Issues | AI版仓库",
+                    title = "报告问题",
+                    subtitle = "选择提交到哪个仓库",
+                    onClick = { showReportChoice = true },
+                    trailing = { NavChevron() }
+                )
+                if (showReportChoice) {
+                    AlertDialog(
+                        onDismissRequest = { showReportChoice = false },
+                        title = { Text("选择仓库") },
+                        text = { Text("将问题提交到哪个GitHub仓库？") },
+                        confirmButton = {
+                            Column {
+                                TextButton(onClick = {
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jajoker-cl/-NotiAI-/issues")))
+                                    showReportChoice = false
+                                }) { Text("AI版仓库 (jajoker-cl)") }
+                                TextButton(onClick = {
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/anujja/DoNotNotify/issues")))
+                                    showReportChoice = false
+                                }) { Text("原作者仓库 (anujja)") }
+                            }
+                        },
+                        dismissButton = { TextButton(onClick = { showReportChoice = false }) { Text("取消") } }
+                    )
+                }
+                RowDivider()
+                SettingsRow(
+                    icon = Icons.Filled.Favorite,
+                    title = "支持开发者",
+                    subtitle = "如果觉得好用，欢迎请开发者喝杯咖啡 ☕",
                     onClick = {
                         context.startActivity(
-                            Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jajoker-cl/NotiAI"))
+                            Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jajoker-cl/-NotiAI-"))
                         )
                     },
                     trailing = { NavChevron() }

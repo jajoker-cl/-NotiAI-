@@ -56,7 +56,8 @@ import com.donotnotify.donotnotify.setup.SetupState
 import com.donotnotify.donotnotify.ui.screens.BlockedScreen
 import com.donotnotify.donotnotify.ui.screens.HistoryScreen
 import com.donotnotify.donotnotify.ui.screens.PrebuiltRulesScreen
-import com.donotnotify.donotnotify.ui.screens.RulesScreen
+import com.donotnotify.donotnotify.ui.screens.AIReviewScreen
+import com.donotnotify.donotnotify.ui.screens.SimpleRulesScreen
 import com.donotnotify.donotnotify.ui.screens.SettingsScreen
 import com.donotnotify.donotnotify.ui.screens.SetupWizardScreen
 import com.donotnotify.donotnotify.ui.theme.DoNotNotifyTheme
@@ -484,8 +485,8 @@ class MainActivity : ComponentActivity() {
         val coroutineScope = rememberCoroutineScope()
         val tabTitles = listOf(
             stringResource(R.string.tab_history, pastNotifications.size),
-            stringResource(R.string.tab_rules, rules.count { it.isEnabled }),
-            stringResource(R.string.tab_blocked, blockedNotifications.size)
+            "规则 (${rules.count { it.isEnabled }})",
+            "AI评判"
         )
 
         Scaffold(
@@ -592,13 +593,8 @@ class MainActivity : ComponentActivity() {
                 onResumeMonitoring
             )
 
-            1 -> RulesScreen(rules, onRuleClick, onDeleteRuleClick, onBrowsePrebuiltRulesClick, onToggleAllRules)
-            2 -> BlockedScreen(
-                blockedNotifications,
-                onClearBlockedHistory,
-                onBlockedNotificationClick,
-                onDeleteNotificationClick
-            )
+            1 -> SimpleRulesScreen(rules, onToggleAllRules)
+            2 -> AIReviewScreen()
         }
     }
 

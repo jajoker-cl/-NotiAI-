@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">DoNotNotify</string>
+    <string name="app_name">NotiAI</string>
 
     <!-- Tabs -->
     <string name="tab_history">历史 (%d)</string>
