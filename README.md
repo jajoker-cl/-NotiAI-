@@ -13,7 +13,7 @@
 如果这个App帮你省下了被垃圾通知轰炸的时间，欢迎请我喝杯咖啡：
 
 <p align="center">
-  <img src="donate_qr.png" width="200" alt="收款码">
+  <img src="donate_qr.jpg" width="200" alt="收款码">
 </p>
 
 （扫码捐赠，金额随意，感谢支持！）
