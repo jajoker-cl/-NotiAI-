@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.AccessAlarms
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.automirrored.outlined.Rule
 import androidx.compose.material3.AlertDialog
@@ -23,6 +24,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -134,7 +136,7 @@ fun RulesScreen(
                 if (appRules.size == 1) {
                     // Single rule — show as flat card (unchanged)
                     item(key = "rule_${appRules[0].id}") {
-                        RuleCard(rule = appRules[0], showAppName = true, onClick = { onRuleClick(appRules[0]) })
+                        RuleCard(rule = appRules[0], showAppName = true, onClick = { onRuleClick(appRules[0]) }, onDelete = { onDeleteRuleClick(appRules[0]) })
                     }
                 } else {
                     // Multiple rules — show a section header then indented rule cards
@@ -160,7 +162,8 @@ fun RulesScreen(
                             rule = rule,
                             showAppName = false,
                             modifier = Modifier.padding(start = 8.dp),
-                            onClick = { onRuleClick(rule) }
+                            onClick = { onRuleClick(rule) },
+                            onDelete = { onDeleteRuleClick(rule) }
                         )
                     }
                 }
@@ -192,14 +195,14 @@ private fun RuleCard(
     rule: BlockerRule,
     showAppName: Boolean,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDelete: (() -> Unit)? = null
 ) {
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .alpha(if (rule.isEnabled) 1f else 0.5f)
-            .clickable { onClick() }
     ) {
         Row(
             modifier = Modifier.padding(start = 16.dp),
@@ -209,6 +212,7 @@ private fun RuleCard(
                 modifier = Modifier
                     .weight(1f)
                     .padding(vertical = 12.dp)
+                    .clickable { onClick() }
             ) {
                 if (showAppName) {
                     Text(
@@ -322,6 +326,15 @@ private fun RuleCard(
                         text = stringResource(R.string.no_hits),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+            if (onDelete != null) {
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = "删除规则",
+                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
                     )
                 }
             }

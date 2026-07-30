@@ -52,14 +52,32 @@ object AiRuleGenerator {
                     put("messages", JSONArray().apply {
                         put(JSONObject().apply {
                             put("role", "system")
-                            put("content", "你是通知过滤规则生成器。根据用户的拦截日志和纠错记录，自动生成拦截/放行规则。\n\n" +
-                                "只输出JSON数组，每个元素格式：\n" +
-                                "{\"packageName\":\"app包名\",\"titleFilter\":\"标题关键词\",\"textFilter\":\"正文关键词\",\"action\":\"block或allow\",\"reason\":\"生成原因\"}\n\n" +
-                                "规则要求：\n" +
-                                "- 关键词简短精确（2-4个字），不要太长\n" +
-                                "- 一个App最多生成2条规则\n" +
-                                "- 只对明确重复出现的模式生成规则\n" +
-                                "- 不要输出任何JSON以外的内容")
+                            put("content", """你是手机通知过滤规则生成器。根据用户的拦截记录和纠错反馈，生成拦截/放行规则。
+
+输出格式：只输出JSON数组，每个元素：
+{"packageName":"包名","titleFilter":"标题关键词","textFilter":"正文关键词","action":"block或allow","reason":"原因"}
+不确定时输出 [] 。不要输出JSON以外的任何内容。
+
+规则要求：
+- 关键词精准（如「优惠券」而非「优」），避免误拦
+- 宁可漏拦也不误拦，不确定就不要生成规则
+- 只对出现3次以上的明确重复模式生成
+- 一个App最多2条规则
+- 微信/QQ/WhatsApp/Telegram不生成规则
+
+不靠谱的规则（不要生成）：
+- 关键词太短太泛：如「通知」「消息」「提醒」
+- 只出现一两次就生成：样本不足
+- 银行/验证码类标记拦截：用户需要收验证码
+
+正例（应该生成）：
+- 某App反复推送「限时优惠」「全场5折」「大促」-> block，关键词「促销」
+- 某App标题固定但内容是广告 -> block，关键词用正文特征词
+- 用户纠错说某App应放行 -> allow规则
+
+反例（不要生成）：
+- 某App只出现一次：不生成
+- 银行App标题「交易提醒」：不拦截""")
                         })
                         put(JSONObject().apply {
                             put("role", "user")
@@ -88,26 +106,33 @@ object AiRuleGenerator {
         }.start()
     }
 
+    // 社交App不生成规则——内容太复杂，关键词区分不了"朋友群聊"和"垃圾广告"
+    private val skipPackagePrefixes = listOf(
+        "com.tencent.mm",      // 微信
+        "com.tencent.mobileqq", // QQ
+        "com.whatsapp",         // WhatsApp
+        "org.telegram",         // Telegram
+    )
+
     private fun buildRuleGenPrompt(logs: List<String>, feedback: List<String>): String {
         val sb = StringBuilder()
-        sb.appendLine("以下是我过去几天的通知过滤记录和纠错反馈，请帮我自动生成拦截/放行规则：")
+        sb.appendLine("以下是我手机上的通知过滤记录和我的纠错反馈。请分析后生成拦截/放行规则。")
         sb.appendLine()
-        sb.appendLine("== 拦截记录（最近50条） ==")
-        for (log in logs.take(50).filter { it.contains("[拦截]") }) {
-            sb.appendLine(log.take(200))
-        }
+        sb.appendLine("== 被拦截的通知（最近50条） ==")
+        val blocked = logs.take(50).filter { it.contains("[拦截]") }
+        if (blocked.isEmpty()) sb.appendLine("（无）")
+        else for (log in blocked) sb.appendLine(log.take(200))
         sb.appendLine()
-        sb.appendLine("== 放行记录（最近20条） ==")
-        for (log in logs.take(50).filter { it.contains("[放行]") }.take(20)) {
-            sb.appendLine(log.take(200))
-        }
+        sb.appendLine("== 放行的通知（最近20条） ==")
+        val passed = logs.take(50).filter { it.contains("[放行]") }.take(20)
+        if (passed.isEmpty()) sb.appendLine("（无）")
+        else for (log in passed) sb.appendLine(log.take(200))
         sb.appendLine()
-        sb.appendLine("== 用户纠错记录 ==")
-        for (fb in feedback.take(20)) {
-            sb.appendLine(fb.take(200))
-        }
+        sb.appendLine("== 我的手动纠错（我最在意的判断） ==")
+        if (feedback.isEmpty()) sb.appendLine("（暂无纠错）")
+        else for (fb in feedback.take(20)) sb.appendLine(fb.take(200))
         sb.appendLine()
-        sb.appendLine("请生成规则。重点：经常被拦截的相似通知生成block规则，纠错要求放行的生成allow规则。")
+        sb.appendLine("请严格按照上述要求生成规则。记住：宁可漏拦也不误拦，不确定就输出 []。")
         return sb.toString()
     }
 

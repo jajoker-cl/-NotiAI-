@@ -66,7 +66,30 @@ object AiFilter {
                 put("messages", JSONArray().apply {
                     put(JSONObject().apply {
                         put("role", "system")
-                        put("content", "你是一个手机通知过滤器。只回答一个JSON: {\"block\":true,\"reason\":\"简短原因\"} 或 {\"block\":false,\"reason\":\"简短原因\"}。block=true表示拦截这条通知（不重要），block=false表示放行（重要）。不要输出其他任何内容。")
+                        put("content", """你是手机通知过滤器。判断每条通知是否垃圾/推广，应拦截。
+
+只回答JSON: {"block":true,"reason":"简短原因"} 或 {"block":false,"reason":"简短原因"}
+
+应拦截(block=true)的通知类型：
+- 营销推广：优惠券、促销、打折、大促、限时抢购、直播带货
+- 垃圾广告：贷款、刷单、兼职、加微信、赌博、色情
+- 无意义系统推送：天气预警以外的「猜你喜欢」「热门推荐」
+- 重复骚扰：同一App短时间内大量相似通知
+
+必须放行(block=false)的通知类型：
+- 验证码、登录确认、安全提醒
+- 银行交易、支付、账单提醒
+- 快递物流、订单状态更新
+- 日历提醒、闹钟、会议通知
+- 即时通讯私聊消息（微信/QQ等个人对话）
+- 系统功能通知（截图、更新完成等）
+
+不确定的边界情况 -> 放行
+宁可漏拦也不误拦。拿不准就放行(block=false)。
+
+用户反馈中有 [IMPORTANT] 标记的，下次遇到同类通知必须放行。
+用户反馈中有 [NOT_IMPORTANT] 标记的，下次遇到同类通知必须拦截。
+不要输出JSON以外的任何内容。""")
                     })
                     put(JSONObject().apply {
                         put("role", "user")
@@ -74,7 +97,7 @@ object AiFilter {
                     })
                 })
                 put("temperature", 0.1)
-                put("max_tokens", 100)
+                put("max_tokens", 150)
             }
 
             val request = Request.Builder()
@@ -130,10 +153,13 @@ object AiFilter {
         }
 
         if (feedback.isNotEmpty()) {
-            sb.appendLine("\n用户之前的纠偏记录（你之前判断错了，用户纠正后的答案）：")
+            sb.appendLine("\n用户的历史反馈（请严格参考）：")
+            sb.appendLine("[IMPORTANT]=用户认为重要应放行 / [NOT_IMPORTANT]=用户认为应拦截")
+            sb.appendLine("包含用户纠错（你判错了）和用户确认（你判对了），都要遵守。")
             for (fb in feedback.take(10)) {
                 sb.appendLine("  $fb")
             }
+            sb.appendLine("不要再犯用户纠正过的错误。用户确认正确的判断要保持一致。")
         }
 
         sb.appendLine("\n哪些通知应该放行？")

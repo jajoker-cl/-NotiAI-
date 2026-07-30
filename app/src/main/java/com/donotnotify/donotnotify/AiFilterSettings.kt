@@ -8,7 +8,7 @@ import android.content.Context
  */
 object AiFilterSettings {
     private const val PREFS_NAME = "ai_filter"
-    private const val KEY_AI_ENABLED = "ai_mode_enabled"
+    private const val KEY_AI_MODE = "ai_mode" // 0=关闭 1=规则优先+AI复查 2=AI直接判断
     private const val KEY_API_KEY = "deepseek_api_key"
     private const val KEY_CUSTOM_RULE = "custom_rule"
     private const val KEY_FEEDBACK_PREFIX = "feedback_"
@@ -16,11 +16,16 @@ object AiFilterSettings {
     private fun prefs(ctx: Context) =
         ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    fun isAiModeEnabled(ctx: Context) =
-        prefs(ctx).getBoolean(KEY_AI_ENABLED, false)
+    /** AI档位：0=关闭 1=规则优先+AI复查 2=AI直接判断 */
+    fun getAiMode(ctx: Context): Int =
+        prefs(ctx).getInt(KEY_AI_MODE, 0)
 
-    fun setAiModeEnabled(ctx: Context, enabled: Boolean) =
-        prefs(ctx).edit().putBoolean(KEY_AI_ENABLED, enabled).apply()
+    fun setAiMode(ctx: Context, mode: Int) =
+        prefs(ctx).edit().putInt(KEY_AI_MODE, mode).apply()
+
+    /** 兼容旧代码：AI是否启用（档位>=1） */
+    fun isAiModeEnabled(ctx: Context) =
+        getAiMode(ctx) >= 1
 
     fun getApiKey(ctx: Context) =
         prefs(ctx).getString(KEY_API_KEY, "") ?: ""

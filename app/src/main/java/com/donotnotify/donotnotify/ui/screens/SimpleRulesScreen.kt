@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -19,7 +20,7 @@ import com.donotnotify.donotnotify.RuleType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SimpleRulesScreen(rules: List<BlockerRule>, onToggleAll: (Boolean) -> Unit) {
+fun SimpleRulesScreen(rules: List<BlockerRule>, onToggleAll: (Boolean) -> Unit, onDeleteRule: ((BlockerRule) -> Unit)? = null) {
     val enabledCount = rules.count { it.isEnabled }
     val allEnabled = rules.isNotEmpty() && enabledCount == rules.size
 
@@ -84,6 +85,13 @@ fun SimpleRulesScreen(rules: List<BlockerRule>, onToggleAll: (Boolean) -> Unit) 
                                 if (!rule.isEnabled) {
                                     Text("已停用", style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.error)
+                                }
+                            }
+                            if (onDeleteRule != null) {
+                                IconButton(onClick = { onDeleteRule(rule) }) {
+                                    Icon(Icons.Filled.Delete, contentDescription = "删除",
+                                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.5f),
+                                        modifier = Modifier.size(20.dp))
                                 }
                             }
                         }

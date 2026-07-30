@@ -52,24 +52,40 @@ fun AIReviewScreen() {
                                 if (rules.isEmpty()) {
                                     generatedResult = "数据不够，至少需要5条以上记录和纠错反馈才能生成规则"
                                 } else {
-                                    // 将规则写入RuleStorage
-                                    val blockerRules = rules.map { r ->
-                                        BlockerRule(
-                                            id = java.util.UUID.randomUUID().toString(),
-                                            packageName = r.packageName,
-                                            titleFilter = r.titleFilter,
-                                            textFilter = r.textFilter,
-                                            titleMatchType = MatchType.CONTAINS,
-                                            textMatchType = MatchType.CONTAINS,
-                                            ruleType = if (r.action == "block") RuleType.DENYLIST else RuleType.ALLOWLIST,
-                                            isEnabled = true
-                                        )
-                                    }
+                                    // 去重后写入RuleStorage
                                     val storage = RuleStorage(ctx)
-                                    storage.addRules(blockerRules)
+                                    val existingRules = storage.getRules()
+                                    var addedCount = 0
+                                    var skippedCount = 0
+                                    for (r in rules) {
+                                        // 检查是否已存在相同规则
+                                        val isDuplicate = existingRules.any { er ->
+                                            er.packageName == r.packageName &&
+                                            er.titleFilter == r.titleFilter &&
+                                            er.textFilter == r.textFilter &&
+                                            er.ruleType == (if (r.action == "block") RuleType.DENYLIST else RuleType.ALLOWLIST)
+                                        }
+                                        if (!isDuplicate) {
+                                            val newRule = BlockerRule(
+                                                id = java.util.UUID.randomUUID().toString(),
+                                                packageName = r.packageName,
+                                                titleFilter = r.titleFilter,
+                                                textFilter = r.textFilter,
+                                                titleMatchType = MatchType.CONTAINS,
+                                                textMatchType = MatchType.CONTAINS,
+                                                ruleType = if (r.action == "block") RuleType.DENYLIST else RuleType.ALLOWLIST,
+                                                isEnabled = true
+                                            )
+                                            storage.addRules(listOf(newRule))
+                                            addedCount++
+                                        } else {
+                                            skippedCount++
+                                        }
+                                    }
                                     StackChannelsAndroid.sync(ctx)
                                     val summary = rules.joinToString("\n") { "${it.action}: ${it.packageName} | ${it.titleFilter} | ${it.reason}" }
-                                    generatedResult = "已生成${rules.size}条规则并添加到规则引擎：\n$summary\n\n现在可以关闭AI模式，用规则引擎运行（设置→关闭AI开关）"
+                                    val skipMsg = if (skippedCount > 0) "\n（跳过${skippedCount}条重复规则）" else ""
+                                    generatedResult = "已新增${addedCount}条规则${skipMsg}：\n$summary\n\n现在可以关闭AI模式，用规则引擎运行（设置→关闭AI开关）"
                                 }
                             }
                         }, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)) {
@@ -107,16 +123,22 @@ fun AIReviewScreen() {
                         Column(modifier = Modifier.padding(12.dp)) {
                             Text(log, style = MaterialTheme.typography.bodySmall, fontSize = 11.sp)
                             Spacer(Modifier.height(4.dp))
-                            val reviewed = AiLogStorage.isReviewed(ctx, idx)
+                            val reviewed = AiLogStorage.isReviewed(ctx, log)
                             if (!reviewed) {
                                 Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                                     TextButton(onClick = {
-                                        AiLogStorage.markReviewed(ctx, idx)
+                                        AiLogStorage.markReviewed(ctx, log)
+                                        val wasBlock = log.contains("[拦截]")
+                                        AiFilterSettings.addFeedback(ctx,
+                                            if (wasBlock) "确认拦截正确" else "确认放行正确",
+                                            "用户确认AI判断无误 | $log".take(200),
+                                            wasImportant = !wasBlock
+                                        )
                                         Toast.makeText(ctx, "✅ 判断正确已记录", Toast.LENGTH_SHORT).show()
                                     }) { Text("✅ 正确", fontSize = 12.sp) }
                                     Spacer(Modifier.width(8.dp))
                                     TextButton(onClick = {
-                                        AiLogStorage.markReviewed(ctx, idx)
+                                        AiLogStorage.markReviewed(ctx, log)
                                         correctingLog = log
                                         correctReason = ""
                                     }) { Text("❌ 纠错", fontSize = 12.sp) }

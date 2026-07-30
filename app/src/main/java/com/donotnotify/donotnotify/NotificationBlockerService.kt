@@ -40,10 +40,20 @@ class NotificationBlockerService : NotificationListenerService() {
         }
     }
 
+    // 同App冷却期：同App N秒内的第二条通知不响铃不震动
+    private val lastRangTime = mutableMapOf<String, Long>()
+    private val COOLDOWN_MS = 5_000L
+
+    // 历史记录去重：同App同标题N秒内只记一条（防加速器/网速类刷屏）
+    private val lastHistoryRecordTime = mutableMapOf<String, Long>()
+    private val HISTORY_DEDUP_MS = 30_000L
+
     private val recentlyBlocked = mutableMapOf<String, Long>()
     private val historyExecutor: ExecutorService = Executors.newSingleThreadExecutor { r ->
         Thread(r, "history-writer").apply { isDaemon = true }
     }
+
+    private val STATUS_NOTIF_ID = 1001
 
     private val stackPoster: StackedNotificationManager.StackPoster by lazy {
         StackedNotificationManager.AndroidStackPoster(
@@ -75,6 +85,11 @@ class NotificationBlockerService : NotificationListenerService() {
         statsStorage = StatsStorage(this)
         unmonitoredAppsStorage = UnmonitoredAppsStorage(this)
         appInfoStorage = AppInfoStorage(this)
+        // 状态通知通道（无声音无振动）
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        val statusCh = android.app.NotificationChannel("status", "运行状态", android.app.NotificationManager.IMPORTANCE_LOW)
+        statusCh.setSound(null, null); statusCh.enableVibration(false)
+        nm.createNotificationChannel(statusCh)
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -83,21 +98,50 @@ class NotificationBlockerService : NotificationListenerService() {
 
         val packageName = sbn.packageName
 
-        // Reentrancy guard (FIRST): our own re-posted stack notifications must never
-        // re-enter rule/history/stack processing or we recurse infinitely.
+        // 自己的通知不处理
         if (packageName == BuildConfig.APPLICATION_ID) return
+        // 用户白名单：不监控的App全部放行
+        if (unmonitoredAppsStorage.isAppUnmonitored(packageName)) return
 
         val notification = sbn.notification
         val title = notification.extras.getCharSequence("android.title")?.toString()
         val text = notification.extras.getCharSequence("android.text")?.toString()
-        val currentTime = System.currentTimeMillis()
+        var appLabel = resolveAppName(this, sbn).toString()
+
+        // 冷却期：同App 5秒内的后续通知→取消原声→静默重发
+        val now = System.currentTimeMillis()
+        val lastRing = lastRangTime[packageName]
+        if (lastRing != null && now - lastRing < COOLDOWN_MS) {
+            cancelNotification(sbn.key)
+            // 静默重发（只显示不响不震）
+            try {
+                val nm = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                val chId = "cooldown_silent"
+                if (nm.getNotificationChannel(chId) == null) {
+                    val ch = android.app.NotificationChannel(chId, "冷却期", android.app.NotificationManager.IMPORTANCE_LOW)
+                    ch.setSound(null, null); ch.enableVibration(false)
+                    nm.createNotificationChannel(ch)
+                }
+                val silent = android.app.Notification.Builder(this, chId)
+                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setContentTitle(title ?: appLabel.toString())
+                    .setContentText(text ?: "")
+                    .setAutoCancel(true)
+                    .build()
+                nm.notify(sbn.key.hashCode(), silent)
+            } catch (e: Exception) { /* 重发失败不影响主流程 */ }
+            Log.d(TAG, "Cooldown: silenced $packageName (last ring ${now - lastRing}ms ago)")
+            return
+        }
+        lastRangTime[packageName] = now
+        // 清理超过30秒的冷却记录
+        lastRangTime.entries.removeIf { now - it.value > 30_000L }
+        val currentTime = now
 
         if (title.isNullOrBlank() && text.isNullOrBlank()) {
             Log.i(TAG, "Ignoring notification with no title and text from ${sbn.packageName}")
             return
         }
-
-        var appLabel = resolveAppName(this, sbn).toString()
         val savedAppName = appInfoStorage.isAppInfoSaved(packageName)
 
         // Save App Info if not exists
@@ -136,7 +180,7 @@ class NotificationBlockerService : NotificationListenerService() {
         PrebuiltRuleReconciler.reconcileIfLocaleChanged(this)
 
         // ★ AI模式：同步判断（和原规则引擎一样，拦截在声音播放之前）
-        if (AiFilterSettings.isAiModeEnabled(this)) {
+        if (AiFilterSettings.getAiMode(this) == 2) {
             val apiKey = AiFilterSettings.getApiKey(this)
             if (apiKey.isNotBlank()) {
                 // 没有标题也没有内容的通知（纯图标），不浪费API，直接放行
@@ -164,10 +208,16 @@ class NotificationBlockerService : NotificationListenerService() {
                 if (blocked) {
                     cancelNotification(sbn.key)
                     historyExecutor.execute {
-                        val sn = SimpleNotification(appLabel, packageName, title, text, currentTime, wasOngoing = false)
-                        blockedNotificationHistoryStorage.saveNotification(sn)
-                        statsStorage.incrementBlockedNotificationsCount()
-                        sendBroadcast(Intent(ACTION_HISTORY_UPDATED))
+                        val histKey = "${packageName}|${title}"
+                        val lastHist = lastHistoryRecordTime[histKey]
+                        if (lastHist == null || currentTime - lastHist >= HISTORY_DEDUP_MS) {
+                            lastHistoryRecordTime[histKey] = currentTime
+                            val sn = SimpleNotification(appLabel, packageName, title, text, currentTime, wasOngoing = false)
+                            blockedNotificationHistoryStorage.saveNotification(sn)
+                            statsStorage.incrementBlockedNotificationsCount()
+                            sendBroadcast(Intent(ACTION_HISTORY_UPDATED))
+                            updateStatusNotification()
+                        }
                     }
                     return
                 }
@@ -196,9 +246,8 @@ class NotificationBlockerService : NotificationListenerService() {
             }
             Log.i(TAG, "Blocking notification from $packageName. Matched rule: $matchedRule")
             cancelNotification(sbn.key)
-            // ★ AI校验层：规则拦截后，AI后台复查
-            // 非AI模式（纯规则模式）下也运行，因为规则可能是AI生成的
-            if (AiFilterSettings.isAiModeEnabled(this) || AiFilterSettings.getApiKey(this).isNotBlank()) {
+            // ★ AI校验层：规则拦截后，AI后台复查（档位1和2均启用）
+            if (AiFilterSettings.getAiMode(this) >= 1 && AiFilterSettings.getApiKey(this).isNotBlank()) {
                 val ruleBlockedPkg = packageName
                 val ruleBlockedTitle = title
                 val ruleBlockedText = text
@@ -209,31 +258,9 @@ class NotificationBlockerService : NotificationListenerService() {
                         val aiCheck = AiFilter.decide(this@NotificationBlockerService, ruleBlockedPkg, ruleBlockedTitle, ruleBlockedText)
                         // AI说应该放行，但规则拦截了 → 重新放出来
                         if (aiCheck != null && !aiCheck.shouldBlock) {
-                            Log.w(TAG, "AI disagrees with rule: re-posting $ruleBlockedPkg")
-                            // 重新发通知
-                            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
-                            val chId = "ai_conflict"
-                            val ch = android.app.NotificationChannel(chId, "拦截存疑", android.app.NotificationManager.IMPORTANCE_HIGH)
-                            nm.createNotificationChannel(ch)
-                            val restored = android.app.Notification.Builder(this@NotificationBlockerService, chId)
-                                .setSmallIcon(android.R.drawable.ic_dialog_info)
-                                .setContentTitle(ruleBlockedTitle ?: ruleBlockedLabel)
-                                .setContentText(ruleBlockedText ?: "")
-                                .setAutoCancel(true)
-                                .build()
-                            nm.notify(ruleBlockedKey.hashCode(), restored)
-                            // 发系统通知提醒用户
-                            val alertMsg = "规则拦截了[" + ruleBlockedLabel + "]的通知，AI认为应该放行。请打开App查看详情。"
-                            val alertN = android.app.Notification.Builder(this@NotificationBlockerService, chId)
-                                .setSmallIcon(android.R.drawable.ic_dialog_alert)
-                                .setContentTitle("NotiAI - 拦截存疑")
-                                .setContentText(alertMsg)
-                                .setAutoCancel(true)
-                                .setPriority(android.app.Notification.PRIORITY_HIGH)
-                                .build()
-                            nm.notify(("ai_conflict_" + ruleBlockedKey).hashCode(), alertN)
-                            // 记录冲突
-                            AiLogStorage.addLog(this@NotificationBlockerService, ruleBlockedPkg, "⚠冲突", "${ruleBlockedTitle} | ${ruleBlockedText}", "AI认为应放行-已恢复", false, 0)
+                            Log.w(TAG, "AI disagrees with rule: $ruleBlockedPkg")
+                            // 仅记录冲突日志，不弹系统通知
+                            AiLogStorage.addLog(this@NotificationBlockerService, ruleBlockedPkg, "⚠冲突", "${ruleBlockedTitle} | ${ruleBlockedText}", "AI认为应放行", false, 0)
                         }
                     } catch (e: Exception) {
                         Log.e(TAG, "AI validation error", e)
@@ -271,6 +298,34 @@ class NotificationBlockerService : NotificationListenerService() {
             }
             // Stacked notifications are NOT "blocked": they fall through to the
             // normal-history branch below (blocked count is not incremented).
+        }
+
+        // ★ 档位1：规则放行的通知，AI后台复查是否放行错误
+        if (!isBlocked && !decision.shouldStack &&
+            AiFilterSettings.getAiMode(this) == 1 &&
+            AiFilterSettings.getApiKey(this).isNotBlank()) {
+            val passKey = sbn.key
+            val passPkg = packageName
+            val passTitle = title
+            val passText = text
+            val passLabel = appLabel.toString()
+            historyExecutor.execute {
+                try {
+                    val aiCheck = AiFilter.decide(this@NotificationBlockerService, passPkg, passTitle, passText)
+                    if (aiCheck != null && aiCheck.shouldBlock) {
+                        Log.w(TAG, "AI overrides rule pass: blocking $passPkg")
+                        cancelNotification(passKey)
+                        AiLogStorage.addLog(this@NotificationBlockerService, passPkg, "⚠AI补拦", "${passTitle ?: ""} | ${passText ?: ""}", "AI认为应拦截", true, 0)
+                        val sn = SimpleNotification(passLabel, passPkg, passTitle, passText, currentTime, wasOngoing = false)
+                        blockedNotificationHistoryStorage.saveNotification(sn)
+                        statsStorage.incrementBlockedNotificationsCount()
+                        updateStatusNotification()
+                        sendBroadcast(Intent(ACTION_HISTORY_UPDATED))
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "AI pass-check error", e)
+                }
+            }
         }
 
         // Carry the matched rule *ids*, not a whole-list snapshot: storage re-reads current
@@ -311,17 +366,25 @@ class NotificationBlockerService : NotificationListenerService() {
             historyExecutor.execute {
                 try {
                     ruleStorage.incrementHitCounts(hitRuleIds)
-                    if (isBlocked) {
-                        val isNew = blockedNotificationHistoryStorage.saveNotification(simpleNotification)
-                        if (isNew) {
-                            statsStorage.incrementBlockedNotificationsCount()
+                    val histKey = "${packageName}|${title}"
+                    val lastHist = lastHistoryRecordTime[histKey]
+                    if (lastHist == null || currentTime - lastHist >= HISTORY_DEDUP_MS) {
+                        lastHistoryRecordTime[histKey] = currentTime
+                        if (isBlocked) {
+                            val isNew = blockedNotificationHistoryStorage.saveNotification(simpleNotification)
+                            if (isNew) {
+                                statsStorage.incrementBlockedNotificationsCount()
+                                updateStatusNotification()
+                            }
+                        } else {
+                            if (!unmonitoredAppsStorage.isAppUnmonitored(packageName)) {
+                                notificationHistoryStorage.saveNotification(simpleNotification)
+                            }
                         }
-                    } else {
-                        if (!unmonitoredAppsStorage.isAppUnmonitored(packageName)) {
-                            notificationHistoryStorage.saveNotification(simpleNotification)
-                        }
+                        sendBroadcast(Intent(ACTION_HISTORY_UPDATED))
                     }
-                    sendBroadcast(Intent(ACTION_HISTORY_UPDATED))
+                    // 清理超过60秒的历史去重记录
+                    lastHistoryRecordTime.entries.removeIf { currentTime - it.value > 60_000L }
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to save notification data", e)
                 }
@@ -345,6 +408,7 @@ class NotificationBlockerService : NotificationListenerService() {
         heartbeatHandler.removeCallbacks(heartbeatRunnable)
         heartbeatHandler.postDelayed(heartbeatRunnable, HEARTBEAT_INTERVAL_MS)
         Log.i(TAG, "Listener connected")
+        updateStatusNotification()
         // Restart-safety: cancel any of our own stacks that survived a process
         // restart and clear the in-memory registry (no orphans / no id reuse).
         try {
@@ -416,6 +480,19 @@ class NotificationBlockerService : NotificationListenerService() {
             // 3. Honest last resort
             pkg
         }
+    }
+
+    private fun updateStatusNotification() {
+        val blocked = statsStorage.getTodayBlockedCount()
+        val formatted = StatsStorage.formatCount(blocked)
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        val n = android.app.Notification.Builder(this, "status")
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle("🛡 NotiAI 保护中")
+            .setContentText("今日已拦截 $formatted 条通知")
+            .setOngoing(true)
+            .build()
+        nm.notify(STATUS_NOTIF_ID, n)
     }
 
 }

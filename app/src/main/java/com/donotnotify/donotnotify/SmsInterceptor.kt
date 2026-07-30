@@ -17,7 +17,7 @@ class SmsInterceptor : BroadcastReceiver() {
     private val TAG = "SmsInterceptor"
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (!AiFilterSettings.isAiModeEnabled(context)) return
+        if (AiFilterSettings.getAiMode(context) != 2) return
         val apiKey = AiFilterSettings.getApiKey(context)
         if (apiKey.isBlank()) return
 

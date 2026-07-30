@@ -8,6 +8,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -77,6 +79,10 @@ import com.donotnotify.donotnotify.RuleImport
 import com.donotnotify.donotnotify.RuleStorage
 import com.donotnotify.donotnotify.AiFilterSettings
 import com.donotnotify.donotnotify.AiLogStorage
+import com.donotnotify.donotnotify.AppInfoStorage
+import com.donotnotify.donotnotify.BlockedNotificationHistoryStorage
+import com.donotnotify.donotnotify.NotificationHistoryStorage
+import com.donotnotify.donotnotify.UnmonitoredAppsStorage
 import com.donotnotify.donotnotify.StackChannelsAndroid
 import com.donotnotify.donotnotify.ui.components.AboutDialog
 import java.io.ByteArrayOutputStream
@@ -94,7 +100,7 @@ fun SettingsScreen(
     var showAboutDialog by remember { mutableStateOf(false) }
 
     // ★ AI模式状态
-    var aiEnabled by remember { mutableStateOf(AiFilterSettings.isAiModeEnabled(context)) }
+    var aiMode by remember { mutableStateOf(AiFilterSettings.getAiMode(context)) }
     var aiApiKey by remember { mutableStateOf(AiFilterSettings.getApiKey(context)) }
     var aiCustomRule by remember { mutableStateOf(AiFilterSettings.getCustomRule(context)) }
     var showAiLogs by remember { mutableStateOf(false) }
@@ -104,6 +110,7 @@ fun SettingsScreen(
     var showExportImportDialog by remember { mutableStateOf(false) }
     var exportImportMessage by remember { mutableStateOf<String?>(null) }
     var showResetHitsDialog by remember { mutableStateOf(false) }
+    var showUnmonitoredDialog by remember { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
@@ -302,6 +309,16 @@ fun SettingsScreen(
                 )
             }
 
+            SettingsSection(title = stringResource(R.string.settings_section_general)) {
+                SettingsRow(
+                    icon = Icons.Filled.VisibilityOff,
+                    title = "管理不监控应用",
+                    subtitle = "添加后该App所有通知直接放行",
+                    onClick = { showUnmonitoredDialog = true },
+                    trailing = { NavChevron() }
+                )
+            }
+
             SettingsSection(title = stringResource(R.string.settings_section_rules)) {
                 SettingsRow(
                     icon = Icons.Filled.ImportExport,
@@ -320,51 +337,63 @@ fun SettingsScreen(
                 )
             }
 
-            // ★ AI模式设置
+            // ★ AI模式设置 - 三档选择
             SettingsSection(title = "🤖 AI智能过滤 (DeepSeek)") {
-                SettingsRow(
-                    icon = Icons.Filled.BugReport,
-                    title = "启用AI模式",
-                    subtitle = "DeepSeek AI判断通知重要性。规则引擎同时运行，AI会校验规则是否误判",
-                    trailing = {
-                        Switch(
-                            checked = aiEnabled,
-                            onCheckedChange = { enabled ->
-                                aiEnabled = enabled
-                                AiFilterSettings.setAiModeEnabled(context, enabled)
-                                if (enabled) {
-                                    AiFilterSettings.markAiStartTime(context)
-                                    Toast.makeText(context, "AI模式已开启，DeepSeek将从现在开始判断通知。前${AiFilterSettings.getObservationDays(context)}天为学习期，建议多去AI评判页面纠错", Toast.LENGTH_LONG).show()
-                                } else {
-                                    Toast.makeText(context, "AI模式已关闭，恢复规则引擎", Toast.LENGTH_SHORT).show()
-                                }
-                            }
+                // 档位说明卡片
+                androidx.compose.material3.OutlinedCard(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = androidx.compose.material3.CardDefaults.outlinedCardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("💡", style = MaterialTheme.typography.titleMedium)
+                        Spacer(Modifier.width(10.dp))
+                        Text(
+                            "建议前3天使用「AI直接判断」学习，之后切「规则优先+AI复查」日常使用",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
                         )
                     }
+                }
+                Spacer(Modifier.height(4.dp))
+                // 三档单选
+                val modes = listOf(
+                    Triple(0, "关闭AI", "纯规则引擎，AI完全不参与，仅凭自定义规则拦截"),
+                    Triple(1, "规则优先 + AI复查", "规则引擎先判断，AI后台双向复查拦截和放行是否都有误判"),
+                    Triple(2, "AI直接判断", "AI先判断每条通知（学习阶段），不经过规则引擎")
                 )
-                RowDivider()
-                // 观察期天数
-                var obsDays by remember { mutableStateOf(AiFilterSettings.getObservationDays(context).toString()) }
-                SettingsRow(
-                    icon = Icons.Filled.History,
-                    title = "学习期天数",
-                    subtitle = "AI会正常拦截，建议在此期间多去AI评判页面纠错优化",
-                    trailing = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            TextButton(onClick = {
-                                val d = (obsDays.toIntOrNull() ?: 3) - 1
-                                if (d >= 1) { obsDays = d.toString(); AiFilterSettings.setObservationDays(context, d) }
-                            }) { Text("－") }
-                            Text(obsDays, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                            TextButton(onClick = {
-                                val d = (obsDays.toIntOrNull() ?: 3) + 1
-                                if (d <= 7) { obsDays = d.toString(); AiFilterSettings.setObservationDays(context, d) }
-                            }) { Text("＋") }
-                            Text("天", style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                modes.forEach { (mode, title, subtitle) ->
+                    SettingsRow(
+                        icon = Icons.Filled.BugReport,
+                        title = title,
+                        subtitle = subtitle,
+                        trailing = {
+                            androidx.compose.material3.RadioButton(
+                                selected = aiMode == mode,
+                                onClick = {
+                                    aiMode = mode
+                                    AiFilterSettings.setAiMode(context, mode)
+                                    if (mode == 2) AiFilterSettings.markAiStartTime(context)
+                                    val msg = when (mode) {
+                                        0 -> "AI已关闭，纯规则引擎运行"
+                                        1 -> "规则优先+AI复查：AI会双向校验规则引擎的拦截和放行"
+                                        2 -> "AI直接判断模式已开启，前3天建议多去AI评判页面纠错"
+                                        else -> ""
+                                    }
+                                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                                }
+                            )
                         }
-                    }
-                )
+                    )
+                    if (mode < 2) RowDivider()
+                }
                 RowDivider()
                 // API Key输入（填完显示●●●●）
                 var apiKeyVisible by remember { mutableStateOf(false) }
@@ -535,6 +564,80 @@ fun SettingsScreen(
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         }
+    }
+
+    // 管理不监控应用弹窗
+    if (showUnmonitoredDialog) {
+        val storage = remember { UnmonitoredAppsStorage(context) }
+        val appInfo = remember { AppInfoStorage(context) }
+        val histStorage = remember { NotificationHistoryStorage(context) }
+        val blockedStorage = remember { BlockedNotificationHistoryStorage(context) }
+        val unmonitored = remember { storage.getUnmonitoredApps() }
+        // 从历史和拦截记录中收集所有见过的App，排除已在白名单的
+        val seenApps = remember {
+            val pkgs = mutableSetOf<String>()
+            for (n in histStorage.getHistory()) n.packageName?.let { pkgs.add(it) }
+            for (n in blockedStorage.getHistory()) n.packageName?.let { pkgs.add(it) }
+            pkgs.filter { it !in unmonitored }
+        }
+        AlertDialog(
+            onDismissRequest = { showUnmonitoredDialog = false },
+            title = { Text("不监控应用管理") },
+            text = {
+                LazyColumn {
+                    // 已添加的白名单
+                    item { Text("已添加 (${unmonitored.size})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 4.dp)) }
+                    if (unmonitored.isEmpty()) {
+                        item { Text("暂无", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
+                    } else {
+                        itemsIndexed(unmonitored.toList()) { _, pkg ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = appInfo.getAppName(pkg) ?: pkg,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                TextButton(onClick = { storage.removeApp(pkg) }) {
+                                    Text("恢复", fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+                    // 可添加的应用
+                    item {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                        Text("可添加 (${seenApps.size})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 4.dp))
+                    }
+                    if (seenApps.isEmpty()) {
+                        item { Text("没有新应用可添加", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
+                    } else {
+                        itemsIndexed(seenApps) { _, pkg ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = appInfo.getAppName(pkg) ?: pkg,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                TextButton(onClick = { storage.addApp(pkg) }) {
+                                    Text("添加", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showUnmonitoredDialog = false }) {
+                    Text("关闭")
+                }
+            }
+        )
     }
 }
 

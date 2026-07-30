@@ -593,7 +593,7 @@ class MainActivity : ComponentActivity() {
                 onResumeMonitoring
             )
 
-            1 -> SimpleRulesScreen(rules, onToggleAllRules)
+            1 -> SimpleRulesScreen(rules, onToggleAllRules, onDeleteRule = onDeleteRuleClick)
             2 -> AIReviewScreen()
         }
     }
