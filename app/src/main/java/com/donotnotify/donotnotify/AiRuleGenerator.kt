@@ -15,6 +15,11 @@ import java.util.concurrent.TimeUnit
  */
 object AiRuleGenerator {
     private const val TAG = "AiRuleGenerator"
+
+    // 各提供商 API 地址
+    private const val API_URL_DEEPSEEK = "https://api.deepseek.com/chat/completions"
+    private const val API_URL_MIMO = "https://api.xiaomimimo.com/v1/chat/completions"
+
     private val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
@@ -47,37 +52,40 @@ object AiRuleGenerator {
 
         Thread {
             try {
+                val provider = AiFilterSettings.getProvider(ctx)
+                val apiUrl = if (provider == AiFilterSettings.PROVIDER_MIMO) API_URL_MIMO else API_URL_DEEPSEEK
+
                 val body = JSONObject().apply {
-                    put("model", "deepseek-chat")
+                    put("model", AiFilterSettings.getCurrentModel(ctx))
                     put("messages", JSONArray().apply {
                         put(JSONObject().apply {
                             put("role", "system")
-                            put("content", """你是手机通知过滤规则生成器。根据用户的拦截记录和纠错反馈，生成拦截/放行规则。
+                            put("content", """你是手机通知过滤规则生成器。根据用户的通知记录和纠错反馈，生成拦截/放行规则。
 
 输出格式：只输出JSON数组，每个元素：
 {"packageName":"包名","titleFilter":"标题关键词","textFilter":"正文关键词","action":"block或allow","reason":"原因"}
 不确定时输出 [] 。不要输出JSON以外的任何内容。
 
 规则要求：
-- 关键词精准（如「优惠券」而非「优」），避免误拦
-- 宁可漏拦也不误拦，不确定就不要生成规则
-- 只对出现3次以上的明确重复模式生成
-- 一个App最多2条规则
+- 营销广告识别要激进：凡包含「优惠」「促销」「限时」「活动」「推荐」「热门」「直播」「上新」「福利」「红包」「会员」「低价」「大促」「秒杀」「折扣」「抢购」「免费领」「抽奖」等营销词，就生成block规则
+- 同一App反复推送营销内容（高频放行的App），优先为其生成block规则
+- 一个App最多3条规则，覆盖不同营销类型
 - 微信/QQ/WhatsApp/Telegram不生成规则
 
-不靠谱的规则（不要生成）：
-- 关键词太短太泛：如「通知」「消息」「提醒」
-- 只出现一两次就生成：样本不足
-- 银行/验证码类标记拦截：用户需要收验证码
+绝不能生成block规则的通知（务必放行）：
+- 银行交易、支付、验证码、账单
+- 快递物流、订单状态
+- 日历/闹钟/会议提醒
+- 即时通讯私聊
 
 正例（应该生成）：
-- 某App反复推送「限时优惠」「全场5折」「大促」-> block，关键词「促销」
-- 某App标题固定但内容是广告 -> block，关键词用正文特征词
+- 某App反复推送「限时优惠」「全场5折」「大促」-> block，关键词「优惠」「大促」
+- 某电商App高频放行但全是「猜你喜欢」「热卖推荐」-> block，关键词「推荐」
 - 用户纠错说某App应放行 -> allow规则
 
 反例（不要生成）：
-- 某App只出现一次：不生成
-- 银行App标题「交易提醒」：不拦截""")
+- 银行App标题「交易提醒」：不拦截
+- 关键词太泛如「通知」「消息」「提醒」：不生成""")
                         })
                         put(JSONObject().apply {
                             put("role", "user")
@@ -89,7 +97,7 @@ object AiRuleGenerator {
                 }
 
                 val request = Request.Builder()
-                    .url("https://api.deepseek.com/chat/completions")
+                    .url(apiUrl)
                     .addHeader("Authorization", "Bearer $apiKey")
                     .addHeader("Content-Type", "application/json")
                     .post(body.toString().toRequestBody("application/json".toMediaType()))
@@ -118,21 +126,45 @@ object AiRuleGenerator {
         val sb = StringBuilder()
         sb.appendLine("以下是我手机上的通知过滤记录和我的纠错反馈。请分析后生成拦截/放行规则。")
         sb.appendLine()
-        sb.appendLine("== 被拦截的通知（最近50条） ==")
-        val blocked = logs.take(50).filter { it.contains("[拦截]") }
+
+        // 日志格式：[MM-dd HH:mm:ss] [拦截/放行] [耗时] 包名: 标题 | 正文 | AI: 原因
+        // 提取包名（冒号前）
+        fun parsePkg(line: String): String {
+            val idx = line.indexOf(": ")
+            return if (idx > 0) line.substring(0, idx) else line
+        }
+
+        // 按 App 统计放行记录频率（高频放行 = 最可能漏网的营销）
+        val passed = logs.filter { it.contains("[放行]") && !it.contains("⚠冲突") }
+        val passedByApp = passed.groupBy { parsePkg(it) }
+            .map { (pkg, list) -> pkg to list }
+            .sortedByDescending { it.second.size }
+
+        // 放行的前几名 App（候选营销源）
+        sb.appendLine("== 高频被放行的 App（这些最可能有漏网的广告，重点分析！） ==")
+        val topPassed = passedByApp.take(8)
+        if (topPassed.isEmpty()) sb.appendLine("（无）")
+        else for ((pkg, list) in topPassed) {
+            sb.appendLine("--- $pkg (共 ${list.size} 条放行) ---")
+            for (log in list.take(12)) sb.appendLine("  " + log.take(160))
+        }
+        sb.appendLine()
+
+        // 被拦截的（已有规则确认的营销模式）
+        sb.appendLine("== 已被拦截的通知（确认是广告的样本） ==")
+        val blocked = logs.filter { it.contains("[拦截]") }.take(30)
         if (blocked.isEmpty()) sb.appendLine("（无）")
-        else for (log in blocked) sb.appendLine(log.take(200))
+        else for (log in blocked) sb.appendLine(log.take(160))
         sb.appendLine()
-        sb.appendLine("== 放行的通知（最近20条） ==")
-        val passed = logs.take(50).filter { it.contains("[放行]") }.take(20)
-        if (passed.isEmpty()) sb.appendLine("（无）")
-        else for (log in passed) sb.appendLine(log.take(200))
-        sb.appendLine()
+
         sb.appendLine("== 我的手动纠错（我最在意的判断） ==")
         if (feedback.isEmpty()) sb.appendLine("（暂无纠错）")
         else for (fb in feedback.take(20)) sb.appendLine(fb.take(200))
         sb.appendLine()
-        sb.appendLine("请严格按照上述要求生成规则。记住：宁可漏拦也不误拦，不确定就输出 []。")
+        sb.appendLine("请严格按照上述要求生成规则。判断标准：")
+        sb.appendLine("- 同一App反复推送「优惠/促销/限时/活动/推荐/热门/直播/上新/福利/红包/会员/低价」等营销内容，即使之前被放行，也应生成block规则")
+        sb.appendLine("- 宁可多拦几条广告，也不要让营销通知打扰用户（用户明确表示广告太多了）")
+        sb.appendLine("- 但银行交易/验证码/快递/聊天消息/日程提醒绝不能拦截")
         return sb.toString()
     }
 

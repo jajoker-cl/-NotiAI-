@@ -16,7 +16,10 @@ import java.util.concurrent.TimeUnit
  */
 object AiFilter {
     private const val TAG = "AiFilter"
-    private const val API_URL = "https://api.deepseek.com/chat/completions"
+
+    // 各提供商 API 地址
+    private const val API_URL_DEEPSEEK = "https://api.deepseek.com/chat/completions"
+    private const val API_URL_MIMO = "https://api.xiaomimimo.com/v1/chat/completions"
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(8, TimeUnit.SECONDS)
@@ -52,6 +55,7 @@ object AiFilter {
             smsCache.remove(cacheKey)
             return cached
         }
+        val provider = AiFilterSettings.getProvider(ctx)
         val apiKey = AiFilterSettings.getApiKey(ctx)
         if (apiKey.isBlank()) return AiResult(shouldBlock = false, reason = "未配置API Key")
 
@@ -62,7 +66,7 @@ object AiFilter {
 
         try {
             val body = JSONObject().apply {
-                put("model", "deepseek-chat")
+                put("model", AiFilterSettings.getCurrentModel(ctx))
                 put("messages", JSONArray().apply {
                     put(JSONObject().apply {
                         put("role", "system")
@@ -100,8 +104,10 @@ object AiFilter {
                 put("max_tokens", 150)
             }
 
+            val apiUrl = if (provider == AiFilterSettings.PROVIDER_MIMO) API_URL_MIMO else API_URL_DEEPSEEK
+
             val request = Request.Builder()
-                .url(API_URL)
+                .url(apiUrl)
                 .addHeader("Authorization", "Bearer $apiKey")
                 .addHeader("Content-Type", "application/json")
                 .post(body.toString().toRequestBody("application/json".toMediaType()))

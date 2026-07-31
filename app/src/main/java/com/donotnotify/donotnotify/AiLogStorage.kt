@@ -12,7 +12,7 @@ import java.util.Locale
 object AiLogStorage {
     private const val PREFS = "ai_logs"
     private const val KEY_LOG = "log_entries"
-    private const val MAX_LOGS = 100
+    private const val MAX_LOGS = 1000
     private val dateFmt = SimpleDateFormat("MM-dd HH:mm:ss", Locale.getDefault())
 
     data class LogEntry(
