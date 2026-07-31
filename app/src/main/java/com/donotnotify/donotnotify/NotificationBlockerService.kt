@@ -231,7 +231,7 @@ class NotificationBlockerService : NotificationListenerService() {
         val rules = ruleStorage.getRules()
         val wasOngoing = (sbn.notification.flags and Notification.FLAG_ONGOING_EVENT) != 0
         val decision = RuleMatcher.planNotificationDecision(rules, packageName, title, text, wasOngoing)
-        val isBlocked = decision.isBlocked
+        var isBlocked = decision.isBlocked
         val matchedRule: BlockerRule? = decision.matchedDenylistRule
         val matchedRuleIndices = decision.matchedRuleIndices
 
@@ -239,33 +239,44 @@ class NotificationBlockerService : NotificationListenerService() {
             Log.i(TAG, "Blocking notification from $packageName because it did not match any allowlist rule.")
         }
 
+        // AI否决标记：档位1下规则拦截被AI判定放行时置true（本次不算拦截）
+        var aiVetoed = false
+
         if (isBlocked) {
-            // Cancel immediately on binder thread
             if (wasOngoing) {
                 Log.w(TAG, "Attempting to block an ongoing notification. Cancellation may not be possible. Key: ${sbn.key}")
             }
             Log.i(TAG, "Blocking notification from $packageName. Matched rule: $matchedRule")
-            cancelNotification(sbn.key)
-            // ★ AI校验层：规则拦截后，AI后台复查（档位1和2均启用）
-            if (AiFilterSettings.getAiMode(this) >= 1 && AiFilterSettings.getApiKey(this).isNotBlank()) {
-                val ruleBlockedPkg = packageName
-                val ruleBlockedTitle = title
-                val ruleBlockedText = text
-                val ruleBlockedLabel = appLabel.toString()
-                val ruleBlockedKey = sbn.key
-                historyExecutor.execute {
-                    try {
-                        val aiCheck = AiFilter.decide(this@NotificationBlockerService, ruleBlockedPkg, ruleBlockedTitle, ruleBlockedText)
-                        // AI说应该放行，但规则拦截了 → 重新放出来
-                        if (aiCheck != null && !aiCheck.shouldBlock) {
-                            Log.w(TAG, "AI disagrees with rule: $ruleBlockedPkg")
-                            // 仅记录冲突日志，不弹系统通知
-                            AiLogStorage.addLog(this@NotificationBlockerService, ruleBlockedPkg, "⚠冲突", "${ruleBlockedTitle} | ${ruleBlockedText}", "AI认为应放行", false, 0)
-                        }
-                    } catch (e: Exception) {
-                        Log.e(TAG, "AI validation error", e)
+
+            // ★ AI复审（档位1：规则拦截前先问AI，AI说放行就不拦 → 通知恢复）
+            if (AiFilterSettings.getAiMode(this) == 1 && AiFilterSettings.getApiKey(this).isNotBlank()) {
+                try {
+                    val future = CompletableFuture.supplyAsync {
+                        AiFilter.decide(this@NotificationBlockerService, packageName, title, text)
                     }
+                    val aiCheck = future.get(3, TimeUnit.SECONDS)
+                    if (aiCheck != null && !aiCheck.shouldBlock) {
+                        aiVetoed = true
+                        Log.i(TAG, "AI vetoed rule block for $packageName: ${aiCheck.reason}")
+                        AiLogStorage.addLog(this, packageName, "⚠规则拦截被AI否决", "${title ?: ""} | ${text ?: ""}", aiCheck.reason, false, 0)
+                    } else {
+                        cancelNotification(sbn.key)
+                        if (aiCheck != null) {
+                            AiLogStorage.addLog(this, packageName, title, text, aiCheck.reason, true, 0)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "AI pre-block check timeout/error: ${e.message}")
+                    cancelNotification(sbn.key)
                 }
+            } else {
+                // 档位0或2：直接按规则拦（档位2已有上方AI直接判断）
+                cancelNotification(sbn.key)
+            }
+
+            // AI否决了拦截 → 本次当作放行，后面的历史/命中计数走放行分支
+            if (aiVetoed) {
+                isBlocked = false
             }
         } else if (decision.shouldStack) {
             // STACK: post the replacement FIRST; only cancel the source if the
@@ -301,7 +312,8 @@ class NotificationBlockerService : NotificationListenerService() {
         }
 
         // ★ 档位1：规则放行的通知，AI后台复查是否放行错误
-        if (!isBlocked && !decision.shouldStack &&
+        // 规则直接放行（非AI否决）的通知，AI后台复查是否放行错误
+        if (!isBlocked && !aiVetoed && !decision.shouldStack &&
             AiFilterSettings.getAiMode(this) == 1 &&
             AiFilterSettings.getApiKey(this).isNotBlank()) {
             val passKey = sbn.key
@@ -331,7 +343,10 @@ class NotificationBlockerService : NotificationListenerService() {
         // Carry the matched rule *ids*, not a whole-list snapshot: storage re-reads current
         // state and bumps only these, so a hit-count write can never resurrect a rule the UI
         // deleted (or clobber an edit) in the window before the executor runs.
-        val hitRuleIds: List<String> = matchedRuleIndices.map { rules[it].id }
+        // AI否决的拦截不增加命中计数
+        val hitRuleIds: List<String> =
+            if (aiVetoed) emptyList()
+            else matchedRuleIndices.map { rules[it].id }
 
         // Debounce check on binder thread
         val notificationKey = sbn.key
