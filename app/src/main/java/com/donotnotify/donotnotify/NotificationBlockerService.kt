@@ -53,6 +53,11 @@ class NotificationBlockerService : NotificationListenerService() {
         Thread(r, "history-writer").apply { isDaemon = true }
     }
 
+    // ★ AI专用线程池：避免公共ForkJoinPool线程耗尽导致排队超时
+    private val aiExecutor: ExecutorService = Executors.newFixedThreadPool(2) { r ->
+        Thread(r, "ai-worker").apply { isDaemon = true }
+    }
+
     private val STATUS_NOTIF_ID = 1001
 
     private val stackPoster: StackedNotificationManager.StackPoster by lazy {
@@ -188,15 +193,16 @@ class NotificationBlockerService : NotificationListenerService() {
                     Log.d(TAG, "Skip AI: empty notification from $packageName")
                 } else {
                 val startTime = System.currentTimeMillis()
-                // 后台线程调API，主线程等结果（最多5秒）
+                // 后台线程调API，主线程等结果（最多5秒，给足API响应时间）
                 var blocked = false
                 var reason = "异常-默认放行"
                 var timeoutOccurred = false
                 try {
-                    val future = java.util.concurrent.CompletableFuture.supplyAsync {
-                        AiFilter.decide(this@NotificationBlockerService, packageName, title, text)
-                    }
-                    val result = future.get(3, TimeUnit.SECONDS)
+                    val future = java.util.concurrent.CompletableFuture.supplyAsync(
+                        { AiFilter.decide(this@NotificationBlockerService, packageName, title, text) },
+                        aiExecutor
+                    )
+                    val result = future.get(5, TimeUnit.SECONDS)
                     blocked = result?.shouldBlock ?: false
                     reason = result?.reason ?: reason
                 } catch (e: Exception) {
@@ -231,7 +237,7 @@ class NotificationBlockerService : NotificationListenerService() {
                     val lateText = text
                     val lateLabel = appLabel.toString()
                     val lateKey = sbn.key
-                    historyExecutor.execute {
+                    aiExecutor.execute {
                         try {
                             val lateCheck = AiFilter.decide(this@NotificationBlockerService, latePkg, lateTitle, lateText)
                             if (lateCheck != null && lateCheck.shouldBlock) {
@@ -279,10 +285,11 @@ class NotificationBlockerService : NotificationListenerService() {
             // ★ AI复审（档位1：规则拦截前先问AI，AI说放行就不拦 → 通知恢复）
             if (AiFilterSettings.getAiMode(this) == 1 && AiFilterSettings.getApiKey(this).isNotBlank()) {
                 try {
-                    val future = CompletableFuture.supplyAsync {
-                        AiFilter.decide(this@NotificationBlockerService, packageName, title, text)
-                    }
-                    val aiCheck = future.get(3, TimeUnit.SECONDS)
+                    val future = CompletableFuture.supplyAsync(
+                        { AiFilter.decide(this@NotificationBlockerService, packageName, title, text) },
+                        aiExecutor
+                    )
+                    val aiCheck = future.get(5, TimeUnit.SECONDS)
                     if (aiCheck != null && !aiCheck.shouldBlock) {
                         aiVetoed = true
                         Log.i(TAG, "AI vetoed rule block for $packageName: ${aiCheck.reason}")
@@ -489,6 +496,7 @@ class NotificationBlockerService : NotificationListenerService() {
         heartbeatHandler.removeCallbacks(heartbeatRunnable)
         super.onDestroy()
         historyExecutor.shutdown()
+        aiExecutor.shutdown()
         try {
             if (!historyExecutor.awaitTermination(2, TimeUnit.SECONDS)) {
                 historyExecutor.shutdownNow()

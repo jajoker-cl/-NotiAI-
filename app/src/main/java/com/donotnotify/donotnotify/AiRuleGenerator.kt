@@ -16,13 +16,12 @@ import java.util.concurrent.TimeUnit
 object AiRuleGenerator {
     private const val TAG = "AiRuleGenerator"
 
-    // 各提供商 API 地址
-    private const val API_URL_DEEPSEEK = "https://api.deepseek.com/chat/completions"
+    // 小米 MiMo API 地址
     private const val API_URL_MIMO = "https://api.xiaomimimo.com/v1/chat/completions"
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(60, TimeUnit.SECONDS)
+        .readTimeout(90, TimeUnit.SECONDS)
         .build()
 
     data class GeneratedRule(
@@ -52,9 +51,6 @@ object AiRuleGenerator {
 
         Thread {
             try {
-                val provider = AiFilterSettings.getProvider(ctx)
-                val apiUrl = if (provider == AiFilterSettings.PROVIDER_MIMO) API_URL_MIMO else API_URL_DEEPSEEK
-
                 val body = JSONObject().apply {
                     put("model", AiFilterSettings.getCurrentModel(ctx))
                     put("messages", JSONArray().apply {
@@ -67,20 +63,21 @@ object AiRuleGenerator {
 不确定时输出 [] 。不要输出JSON以外的任何内容。
 
 规则要求：
-- 营销广告识别要激进：凡包含「优惠」「促销」「限时」「活动」「推荐」「热门」「直播」「上新」「福利」「红包」「会员」「低价」「大促」「秒杀」「折扣」「抢购」「免费领」「抽奖」等营销词，就生成block规则
-- 同一App反复推送营销内容（高频放行的App），优先为其生成block规则
-- 一个App最多3条规则，覆盖不同营销类型
+- 营销广告识别要激进：凡包含「优惠」「促销」「限时」「活动」「推荐」「热门」「直播」「上新」「福利」「红包」「会员」「低价」「大促」「秒杀」「折扣」「抢购」「免费领」「抽奖」「降价」「秒杀」等营销词，就生成block规则
+- ★ 同一App高频推送（一天多次、内容多变的商品/降价/推荐/优惠信息）本身就是营销信号，即使每条标题都不同，也应为该App生成block规则
+- 对标题多变的营销App（如京东这类每天发不同商品降价），建议生成2-3条覆盖不同关键词的block规则，提高拦截覆盖
+- 一个App最多3条规则
 - 微信/QQ/WhatsApp/Telegram不生成规则
 
 绝不能生成block规则的通知（务必放行）：
 - 银行交易、支付、验证码、账单
-- 快递物流、订单状态
+- 快递物流、订单状态（真正的物流更新）
 - 日历/闹钟/会议提醒
 - 即时通讯私聊
 
 正例（应该生成）：
 - 某App反复推送「限时优惠」「全场5折」「大促」-> block，关键词「优惠」「大促」
-- 某电商App高频放行但全是「猜你喜欢」「热卖推荐」-> block，关键词「推荐」
+- 某电商App每天推不同「您看过的XX降价了」「XX商品正在等你」-> block，关键词「降价」「看过的」「等你」等，生成多条
 - 用户纠错说某App应放行 -> allow规则
 
 反例（不要生成）：
@@ -97,7 +94,7 @@ object AiRuleGenerator {
                 }
 
                 val request = Request.Builder()
-                    .url(apiUrl)
+                    .url(API_URL_MIMO)
                     .addHeader("Authorization", "Bearer $apiKey")
                     .addHeader("Content-Type", "application/json")
                     .post(body.toString().toRequestBody("application/json".toMediaType()))
@@ -141,20 +138,25 @@ object AiRuleGenerator {
             .sortedByDescending { it.second.size }
 
         // 放行的前几名 App（候选营销源）
-        sb.appendLine("== 高频被放行的 App（这些最可能有漏网的广告，重点分析！） ==")
+        sb.appendLine("== 高频被放行的 App（重点！同一App高频推送本身就是营销信号，即使标题各不相同） ==")
         val topPassed = passedByApp.take(6)
         if (topPassed.isEmpty()) sb.appendLine("（无）")
         else for ((pkg, list) in topPassed) {
-            sb.appendLine("--- $pkg (共 ${list.size} 条放行) ---")
-            for (log in list.take(8)) sb.appendLine("  " + log.take(120))
+            sb.appendLine("--- $pkg (共 ${list.size} 条放行，高频推送！) ---")
+            // 保留多条让AI看到"高频"信号，但每条截短控制大小
+            for (log in list.take(8)) {
+                val idx = log.indexOf(": ")
+                val body = if (idx > 0) log.substring(idx + 2) else log
+                sb.appendLine("  " + body.take(70))
+            }
         }
         sb.appendLine()
 
         // 被拦截的（已有规则确认的营销模式）
         sb.appendLine("== 已被拦截的通知（确认是广告的样本） ==")
-        val blocked = logs.filter { it.contains("[拦截]") }.take(20)
+        val blocked = logs.filter { it.contains("[拦截]") }.take(15)
         if (blocked.isEmpty()) sb.appendLine("（无）")
-        else for (log in blocked) sb.appendLine(log.take(120))
+        else for (log in blocked) sb.appendLine(log.take(70))
         sb.appendLine()
 
         sb.appendLine("== 我的手动纠错（我最在意的判断） ==")

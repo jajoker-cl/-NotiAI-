@@ -11,14 +11,13 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 /**
- * 调DeepSeek API判断通知是否重要
+ * 调小米 MiMo API 判断通知是否重要
  * 返回true=拦截（不重要），false=放行（重要）
  */
 object AiFilter {
     private const val TAG = "AiFilter"
 
-    // 各提供商 API 地址
-    private const val API_URL_DEEPSEEK = "https://api.deepseek.com/chat/completions"
+    // 小米 MiMo API 地址
     private const val API_URL_MIMO = "https://api.xiaomimimo.com/v1/chat/completions"
 
     private val client = OkHttpClient.Builder()
@@ -29,7 +28,8 @@ object AiFilter {
     private var lastResult: AiResult? = null
 
     // SMS预判断缓存：SmsInterceptor提前调API，NotificationBlockerService直接用
-    private val smsCache = LinkedHashMap<String, AiResult>(10, 0.75f, true)
+    // 用线程安全容器，多线程并发时不会出错
+    private val smsCache = java.util.concurrent.ConcurrentHashMap<String, AiResult>()
     private const val CACHE_TTL_MS = 30_000L // 30秒有效
 
     data class AiResult(val shouldBlock: Boolean, val reason: String)
@@ -55,7 +55,6 @@ object AiFilter {
             smsCache.remove(cacheKey)
             return cached
         }
-        val provider = AiFilterSettings.getProvider(ctx)
         val apiKey = AiFilterSettings.getApiKey(ctx)
         if (apiKey.isBlank()) return AiResult(shouldBlock = false, reason = "未配置API Key")
 
@@ -104,10 +103,8 @@ object AiFilter {
                 put("max_tokens", 150)
             }
 
-            val apiUrl = if (provider == AiFilterSettings.PROVIDER_MIMO) API_URL_MIMO else API_URL_DEEPSEEK
-
             val request = Request.Builder()
-                .url(apiUrl)
+                .url(API_URL_MIMO)
                 .addHeader("Authorization", "Bearer $apiKey")
                 .addHeader("Content-Type", "application/json")
                 .post(body.toString().toRequestBody("application/json".toMediaType()))

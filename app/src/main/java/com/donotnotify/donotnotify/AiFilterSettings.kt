@@ -4,23 +4,17 @@ import android.content.Context
 
 /**
  * AI模式设置存储（SharedPreferences）
- * 用DeepSeek API代替规则引擎判断通知是否重要
+ * 用小米 MiMo API 判断通知是否重要
  */
 object AiFilterSettings {
     private const val PREFS_NAME = "ai_filter"
     private const val KEY_AI_MODE = "ai_mode" // 0=关闭 1=规则优先+AI复查 2=AI直接判断
-    private const val KEY_PROVIDER = "ai_provider" // "deepseek" 或 "mimo"
-    private const val KEY_API_KEY_DEEPSEEK = "deepseek_api_key"
     private const val KEY_API_KEY_MIMO = "mimo_api_key"
     private const val KEY_CUSTOM_RULE = "custom_rule"
     private const val KEY_FEEDBACK_PREFIX = "feedback_"
 
-    // 支持的提供商
-    const val PROVIDER_DEEPSEEK = "deepseek"
+    // 固定使用小米 MiMo
     const val PROVIDER_MIMO = "mimo"
-
-    // 各提供商默认模型
-    const val MODEL_DEEPSEEK = "deepseek-v4-flash"
     const val MODEL_MIMO = "mimo-v2.5"
 
     private fun prefs(ctx: Context) =
@@ -37,36 +31,22 @@ object AiFilterSettings {
     fun isAiModeEnabled(ctx: Context) =
         getAiMode(ctx) >= 1
 
-    /** 当前选中的提供商 */
-    fun getProvider(ctx: Context): String =
-        prefs(ctx).getString(KEY_PROVIDER, PROVIDER_DEEPSEEK) ?: PROVIDER_DEEPSEEK
+    /** 固定返回米猫提供商（兼容旧代码） */
+    fun getProvider(ctx: Context): String = PROVIDER_MIMO
 
-    fun setProvider(ctx: Context, provider: String) =
-        prefs(ctx).edit().putString(KEY_PROVIDER, provider).apply()
+    /** 固定返回米猫模型名 */
+    fun getCurrentModel(ctx: Context): String = MODEL_MIMO
 
-    /** 取当前提供商对应的模型名 */
-    fun getCurrentModel(ctx: Context): String =
-        if (getProvider(ctx) == PROVIDER_MIMO) MODEL_MIMO else MODEL_DEEPSEEK
+    /** 米猫 API Key（兼容旧代码，从 mimo_api_key 读取） */
+    fun getApiKey(ctx: Context): String =
+        prefs(ctx).getString(KEY_API_KEY_MIMO, "") ?: ""
 
-    /** 当前提供商的 API Key */
-    fun getApiKey(ctx: Context): String {
-        val provider = getProvider(ctx)
-        val key = if (provider == PROVIDER_MIMO) KEY_API_KEY_MIMO else KEY_API_KEY_DEEPSEEK
-        return prefs(ctx).getString(key, "") ?: ""
-    }
+    /** 保存米猫 API Key */
+    fun setApiKey(ctx: Context, key: String) =
+        prefs(ctx).edit().putString(KEY_API_KEY_MIMO, key).apply()
 
-    /** 保存某提供商的 API Key（不动另一个） */
-    fun setApiKey(ctx: Context, key: String) {
-        val provider = getProvider(ctx)
-        val prefKey = if (provider == PROVIDER_MIMO) KEY_API_KEY_MIMO else KEY_API_KEY_DEEPSEEK
-        prefs(ctx).edit().putString(prefKey, key).apply()
-    }
-
-    /** 按提供商读 key（用于设置界面展示当前选中的那个） */
-    fun getApiKeyFor(ctx: Context, provider: String): String {
-        val prefKey = if (provider == PROVIDER_MIMO) KEY_API_KEY_MIMO else KEY_API_KEY_DEEPSEEK
-        return prefs(ctx).getString(prefKey, "") ?: ""
-    }
+    /** 按提供商读 key（设置界面展示用，只有米猫） */
+    fun getApiKeyFor(ctx: Context, provider: String): String = getApiKey(ctx)
 
     fun getCustomRule(ctx: Context) =
         prefs(ctx).getString(KEY_CUSTOM_RULE, "") ?: ""

@@ -101,7 +101,6 @@ fun SettingsScreen(
 
     // ★ AI模式状态
     var aiMode by remember { mutableStateOf(AiFilterSettings.getAiMode(context)) }
-    var aiProvider by remember { mutableStateOf(AiFilterSettings.getProvider(context)) }
     var aiApiKey by remember { mutableStateOf(AiFilterSettings.getApiKey(context)) }
     var aiCustomRule by remember { mutableStateOf(AiFilterSettings.getCustomRule(context)) }
     var showAiLogs by remember { mutableStateOf(false) }
@@ -339,7 +338,7 @@ fun SettingsScreen(
             }
 
             // ★ AI模式设置 - 三档选择
-            SettingsSection(title = "🤖 AI智能过滤") {
+            SettingsSection(title = "🤖 AI智能过滤 (小米 MiMo)") {
                 // 档位说明卡片
                 androidx.compose.material3.OutlinedCard(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
@@ -396,47 +395,10 @@ fun SettingsScreen(
                     if (mode < 2) RowDivider()
                 }
                 RowDivider()
-                // 模型提供商选择
-                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                    Text("模型提供商", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                    Text("选择用哪家AI判断通知", style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    // 两个提供商单选
-                    listOf(
-                        Pair(AiFilterSettings.PROVIDER_DEEPSEEK, "DeepSeek V4 Flash"),
-                        Pair(AiFilterSettings.PROVIDER_MIMO, "小米 MiMo V2.5")
-                    ).forEach { (provider, label) ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().clickable {
-                                aiProvider = provider
-                                AiFilterSettings.setProvider(context, provider)
-                                // 切换后载入对应提供商的 key
-                                aiApiKey = AiFilterSettings.getApiKeyFor(context, provider)
-                            }.padding(vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            androidx.compose.material3.RadioButton(
-                                selected = aiProvider == provider,
-                                onClick = {
-                                    aiProvider = provider
-                                    AiFilterSettings.setProvider(context, provider)
-                                    aiApiKey = AiFilterSettings.getApiKeyFor(context, provider)
-                                }
-                            )
-                            Text(label, style = MaterialTheme.typography.bodyLarge)
-                        }
-                    }
-                }
-                RowDivider()
                 // API Key输入（填完显示●●●●）
                 var apiKeyVisible by remember { mutableStateOf(false) }
                 Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                    Text(
-                        if (aiProvider == AiFilterSettings.PROVIDER_MIMO) "小米 MiMo API Key"
-                        else "DeepSeek API Key",
-                        style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium
-                    )
+                    Text("小米 MiMo API Key", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                     Text("填完自动隐藏，点击右侧眼睛查看", style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(6.dp))
