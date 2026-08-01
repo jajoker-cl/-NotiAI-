@@ -26,8 +26,8 @@ android {
         applicationId = "com.donotnotify.donotnotify"
         minSdk = 24
         targetSdk = 36
-        versionCode = 55
-        versionName = "5.22.0"
+        versionCode = 56
+        versionName = "Beta1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -59,12 +59,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Use Play Store key if available, otherwise fall back to public GitHub key
+            // Use Play Store key if available, otherwise fall back to debug key
+            // (与原已安装版本签名一致，保证可覆盖安装)
             val playStoreConfig = signingConfigs.findByName("playStore")
             signingConfig = if (playStoreConfig?.storeFile != null) {
                 playStoreConfig
             } else {
-                signingConfigs.getByName("github")
+                signingConfigs.getByName("debug")
             }
         }
     }

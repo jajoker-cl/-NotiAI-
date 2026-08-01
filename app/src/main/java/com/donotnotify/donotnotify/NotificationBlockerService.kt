@@ -191,6 +191,7 @@ class NotificationBlockerService : NotificationListenerService() {
                 // 后台线程调API，主线程等结果（最多5秒）
                 var blocked = false
                 var reason = "异常-默认放行"
+                var timeoutOccurred = false
                 try {
                     val future = java.util.concurrent.CompletableFuture.supplyAsync {
                         AiFilter.decide(this@NotificationBlockerService, packageName, title, text)
@@ -200,7 +201,8 @@ class NotificationBlockerService : NotificationListenerService() {
                     reason = result?.reason ?: reason
                 } catch (e: Exception) {
                     Log.w(TAG, "AI timeout/error: ${e.message}")
-                    reason = "超时/异常-放行"
+                    reason = "超时-先放行，后台补拦"
+                    timeoutOccurred = true
                 }
                 val duration = System.currentTimeMillis() - startTime
                 AiLogStorage.addLog(this, packageName, title, text, reason, blocked, duration)
@@ -220,6 +222,32 @@ class NotificationBlockerService : NotificationListenerService() {
                         }
                     }
                     return
+                }
+
+                // ★ 超时补拦：先放行避免响铃卡住，但后台继续等AI结果，若该拦则补拦
+                if (timeoutOccurred) {
+                    val latePkg = packageName
+                    val lateTitle = title
+                    val lateText = text
+                    val lateLabel = appLabel.toString()
+                    val lateKey = sbn.key
+                    historyExecutor.execute {
+                        try {
+                            val lateCheck = AiFilter.decide(this@NotificationBlockerService, latePkg, lateTitle, lateText)
+                            if (lateCheck != null && lateCheck.shouldBlock) {
+                                Log.i(TAG, "AI late-block: $latePkg")
+                                cancelNotification(lateKey)
+                                AiLogStorage.addLog(this, latePkg, "⚠超时补拦", "${lateTitle ?: ""} | ${lateText ?: ""}", "AI超时后判定应拦截", true, 0)
+                                val sn = SimpleNotification(lateLabel, latePkg, lateTitle, lateText, currentTime, wasOngoing = false)
+                                blockedNotificationHistoryStorage.saveNotification(sn)
+                                statsStorage.incrementBlockedNotificationsCount()
+                                updateStatusNotification()
+                                sendBroadcast(Intent(ACTION_HISTORY_UPDATED))
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "AI late-block error", e)
+                        }
+                    }
                 }
                 } // end if-else empty check
                 // AI说放行，继续往下走正常流程

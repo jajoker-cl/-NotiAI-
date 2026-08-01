@@ -47,10 +47,18 @@ fun AIReviewScreen() {
                         TextButton(onClick = {
                             generating = true
                             generatedResult = ""
+                            Toast.makeText(ctx, "正在生成规则，可能需要10~60秒，请稍候...", Toast.LENGTH_LONG).show()
                             AiRuleGenerator.generate(ctx) { rules ->
                                 generating = false
                                 if (rules.isEmpty()) {
-                                    generatedResult = "数据不够，至少需要5条以上记录和纠错反馈才能生成规则"
+                                    // 区分：日志够但没生成 → 大概率是API失败/超时
+                                    val logs = AiLogStorage.getLogs(ctx)
+                                    val feedback = AiFilterSettings.getFeedback(ctx)
+                                    if (logs.size >= 10 || feedback.size >= 3) {
+                                        generatedResult = "生成失败，可能是API超时或没有识别到明确营销模式。\n请检查：\n1. API Key是否有效\n2. 网络是否正常\n3. 稍后再试"
+                                    } else {
+                                        generatedResult = "数据不够，至少需要5条以上记录和纠错反馈才能生成规则"
+                                    }
                                 } else {
                                     // 去重后写入RuleStorage
                                     val storage = RuleStorage(ctx)

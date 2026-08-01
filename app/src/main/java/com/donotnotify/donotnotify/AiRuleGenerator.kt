@@ -22,7 +22,7 @@ object AiRuleGenerator {
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
         .build()
 
     data class GeneratedRule(
@@ -142,19 +142,19 @@ object AiRuleGenerator {
 
         // 放行的前几名 App（候选营销源）
         sb.appendLine("== 高频被放行的 App（这些最可能有漏网的广告，重点分析！） ==")
-        val topPassed = passedByApp.take(8)
+        val topPassed = passedByApp.take(6)
         if (topPassed.isEmpty()) sb.appendLine("（无）")
         else for ((pkg, list) in topPassed) {
             sb.appendLine("--- $pkg (共 ${list.size} 条放行) ---")
-            for (log in list.take(12)) sb.appendLine("  " + log.take(160))
+            for (log in list.take(8)) sb.appendLine("  " + log.take(120))
         }
         sb.appendLine()
 
         // 被拦截的（已有规则确认的营销模式）
         sb.appendLine("== 已被拦截的通知（确认是广告的样本） ==")
-        val blocked = logs.filter { it.contains("[拦截]") }.take(30)
+        val blocked = logs.filter { it.contains("[拦截]") }.take(20)
         if (blocked.isEmpty()) sb.appendLine("（无）")
-        else for (log in blocked) sb.appendLine(log.take(160))
+        else for (log in blocked) sb.appendLine(log.take(120))
         sb.appendLine()
 
         sb.appendLine("== 我的手动纠错（我最在意的判断） ==")
