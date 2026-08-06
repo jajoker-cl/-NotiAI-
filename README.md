@@ -2,121 +2,7 @@
 
 一个基于AI的Android通知过滤应用，智能识别并拦截垃圾通知，只保留重要信息。
 
-[English](#english) | [中文](#中文)
-
----
-
-## English
-
-### Features
-
-**🤖 AI-Powered Smart Filtering**
-- AI analyzes every notification in real-time
-- Automatically blocks spam, promotions, and unwanted notifications
-- Only allows important alerts (banking, deliveries, OTPs, work)
-- Uses DeepSeek API for intelligent content analysis
-
-**📝 Automatic Rule Generation**
-- AI automatically extracts keywords from blocked notifications
-- Creates filtering rules for future similar notifications
-- Rules improve over time with PENDING → CONFIRMED progression
-- Hit count tracking for rule quality assessment
-
-**🎯 Flexible Rule System**
-- Denylist: Block notifications matching specific patterns
-- Allowlist: Only allow notifications matching specific patterns
-- Stack: Collapse multiple notifications into expandable groups
-- Regex support for advanced pattern matching
-
-**⏰ Time-Based Rules**
-- Schedule rules to activate during specific time windows
-- Perfect for work hours, sleep time, or meetings
-
-**📊 Statistics & Monitoring**
-- Real-time AI judgment statistics
-- Track blocked notifications count
-- Monitor auto-generated rules performance
-- Visual indicators for AI-generated rules
-
-**🔒 Privacy First**
-- No network permissions required (except for AI API)
-- No data collection or tracking
-- All processing happens on-device or via your own API key
-- Open source and transparent
-
-### Installation
-
-1. Download the latest APK from [Releases](https://github.com/jajoker-cl/-NotiAI-/releases)
-2. Install on your Android device (requires Android 7.0+)
-3. Grant notification listener permission
-4. Configure your DeepSeek API key in Settings
-5. Enable AI filtering
-
-### Usage
-
-1. **Enable AI Filtering**
-   - Go to Settings → AI Features
-   - Toggle "AI Filtering" ON
-   - Enter your DeepSeek API key
-
-2. **Monitor Statistics**
-   - View AI judgment count in Settings
-   - Check blocked notifications in History
-   - See auto-generated rules in Rules tab
-
-3. **Manage Rules**
-   - View AI-generated rules with special "AI" badge
-   - Manually create custom rules
-   - Import/Export rules as JSON
-
-### Technical Details
-
-**Architecture**
-- Kotlin + Jetpack Compose + Material 3
-- NotificationListenerService for real-time filtering
-- Background AI processing with timeout handling
-- LRU cache for AI judgment results
-
-**AI Integration**
-- DeepSeek API for notification analysis
-- Asynchronous processing (non-blocking)
-- 5-second timeout with fail-open design
-- Automatic rule generation from AI results
-
-**File Structure**
-```
-app/src/main/java/com/donotnotify/donotnotify/
-├── AiJudgment.kt              # AI judgment result data class
-├── AiMetadata.kt              # AI rule metadata
-├── AiNotificationCache.kt     # LRU cache for AI results
-├── AiNotificationJudge.kt     # Core AI judgment class
-├── AiRuleGenerator.kt         # Automatic rule generation
-├── AiStatsStorage.kt          # AI statistics storage
-├── BlockerRule.kt             # Rule data model
-├── NotificationBlockerService.kt  # Main notification service
-└── ui/screens/
-    ├── SettingsScreen.kt      # AI settings UI
-    └── RulesScreen.kt         # Rules display with AI badges
-```
-
-### Building
-
-```bash
-# Debug build
-./gradlew assembleDebug
-
-# Release build
-./gradlew assembleRelease
-```
-
-**Requirements:**
-- Android Studio Hedgehog+
-- JDK 11+
-- Android SDK 34
-
-### License
-
-MIT License - See [LICENSE](LICENSE) for details
+[中文](#中文) | [English](#english)
 
 ---
 
@@ -231,6 +117,120 @@ app/src/main/java/com/donotnotify/donotnotify/
 ### 许可证
 
 MIT License - 详见 [LICENSE](LICENSE)
+
+---
+
+## English
+
+### Features
+
+**🤖 AI-Powered Smart Filtering**
+- AI analyzes every notification in real-time
+- Automatically blocks spam, promotions, and unwanted notifications
+- Only allows important alerts (banking, deliveries, OTPs, work)
+- Uses DeepSeek API for intelligent content analysis
+
+**📝 Automatic Rule Generation**
+- AI automatically extracts keywords from blocked notifications
+- Creates filtering rules for future similar notifications
+- Rules improve over time with PENDING → CONFIRMED progression
+- Hit count tracking for rule quality assessment
+
+**🎯 Flexible Rule System**
+- Denylist: Block notifications matching specific patterns
+- Allowlist: Only allow notifications matching specific patterns
+- Stack: Collapse multiple notifications into expandable groups
+- Regex support for advanced pattern matching
+
+**⏰ Time-Based Rules**
+- Schedule rules to activate during specific time windows
+- Perfect for work hours, sleep time, or meetings
+
+**📊 Statistics & Monitoring**
+- Real-time AI judgment statistics
+- Track blocked notifications count
+- Monitor auto-generated rules performance
+- Visual indicators for AI-generated rules
+
+**🔒 Privacy First**
+- No network permissions required (except for AI API)
+- No data collection or tracking
+- All processing happens on-device or via your own API key
+- Open source and transparent
+
+### Installation
+
+1. Download the latest APK from [Releases](https://github.com/jajoker-cl/-NotiAI-/releases)
+2. Install on your Android device (requires Android 7.0+)
+3. Grant notification listener permission
+4. Configure your DeepSeek API key in Settings
+5. Enable AI filtering
+
+### Usage
+
+1. **Enable AI Filtering**
+   - Go to Settings → AI Features
+   - Toggle "AI Filtering" ON
+   - Enter your DeepSeek API key
+
+2. **Monitor Statistics**
+   - View AI judgment count in Settings
+   - Check blocked notifications in History
+   - See auto-generated rules in Rules tab
+
+3. **Manage Rules**
+   - View AI-generated rules with special "AI" badge
+   - Manually create custom rules
+   - Import/Export rules as JSON
+
+### Technical Details
+
+**Architecture**
+- Kotlin + Jetpack Compose + Material 3
+- NotificationListenerService for real-time filtering
+- Background AI processing with timeout handling
+- LRU cache for AI judgment results
+
+**AI Integration**
+- DeepSeek API for notification analysis
+- Asynchronous processing (non-blocking)
+- 5-second timeout with fail-open design
+- Automatic rule generation from AI results
+
+**File Structure**
+```
+app/src/main/java/com/donotnotify/donotnotify/
+├── AiJudgment.kt              # AI judgment result data class
+├── AiMetadata.kt              # AI rule metadata
+├── AiNotificationCache.kt     # LRU cache for AI results
+├── AiNotificationJudge.kt     # Core AI judgment class
+├── AiRuleGenerator.kt         # Automatic rule generation
+├── AiStatsStorage.kt          # AI statistics storage
+├── BlockerRule.kt             # Rule data model
+├── NotificationBlockerService.kt  # Main notification service
+└── ui/screens/
+    ├── SettingsScreen.kt      # AI settings UI
+    └── RulesScreen.kt         # Rules display with AI badges
+```
+
+### Building
+
+```bash
+# Debug build
+./gradlew assembleDebug
+
+# Release build
+./gradlew assembleRelease
+```
+
+**Requirements:**
+- Android Studio Hedgehog+
+- JDK 11+
+- Android SDK 34
+
+### License
+
+MIT License - See [LICENSE](LICENSE) for details
 
 ---
 
