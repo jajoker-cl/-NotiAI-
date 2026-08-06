@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -28,6 +29,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.History
@@ -44,6 +46,7 @@ import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -61,8 +64,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.donotnotify.donotnotify.AiStatsStorage
 import com.donotnotify.donotnotify.ImportError
 import com.donotnotify.donotnotify.ImportResult
 import com.donotnotify.donotnotify.R
@@ -87,10 +92,17 @@ fun SettingsScreen(
     var showAboutDialog by remember { mutableStateOf(false) }
 
     val ruleStorage = remember { RuleStorage(context) }
+    val aiStatsStorage = remember { AiStatsStorage(context) }
+
+    // AI settings state
+    var isAiEnabled by remember { mutableStateOf(aiStatsStorage.isAiEnabled()) }
+    var apiKey by remember { mutableStateOf(aiStatsStorage.getApiKey()) }
+    var showApiKeyDialog by remember { mutableStateOf(false) }
 
     var showExportImportDialog by remember { mutableStateOf(false) }
     var exportImportMessage by remember { mutableStateOf<String?>(null) }
     var showResetHitsDialog by remember { mutableStateOf(false) }
+    var showResetAiStatsDialog by remember { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
@@ -223,6 +235,78 @@ fun SettingsScreen(
         )
     }
 
+    if (showResetAiStatsDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetAiStatsDialog = false },
+            title = { Text(stringResource(R.string.ai_reset_stats_title)) },
+            text = { Text(stringResource(R.string.ai_reset_stats_confirm)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    aiStatsStorage.resetStats()
+                    showResetAiStatsDialog = false
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.ai_stats_reset),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }) {
+                    Text(stringResource(R.string.reset))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetAiStatsDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    if (showApiKeyDialog) {
+        var tempApiKey by remember { mutableStateOf(apiKey) }
+        AlertDialog(
+            onDismissRequest = { showApiKeyDialog = false },
+            title = { Text(stringResource(R.string.ai_api_key_title)) },
+            text = {
+                Column {
+                    Text(
+                        text = stringResource(R.string.ai_api_key_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = tempApiKey,
+                        onValueChange = { tempApiKey = it },
+                        label = { Text(stringResource(R.string.ai_api_key_label)) },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    apiKey = tempApiKey
+                    aiStatsStorage.setApiKey(tempApiKey)
+                    showApiKeyDialog = false
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.ai_api_key_saved),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }) {
+                    Text(stringResource(R.string.save))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showApiKeyDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
     if (exportImportMessage != null) {
         AlertDialog(
             onDismissRequest = { exportImportMessage = null },
@@ -263,6 +347,47 @@ fun SettingsScreen(
                 .imePadding()
                 .verticalScroll(rememberScrollState())
         ) {
+            // AI Settings Section
+            SettingsSection(title = stringResource(R.string.settings_section_ai)) {
+                SettingsRow(
+                    icon = Icons.Filled.AutoAwesome,
+                    title = stringResource(R.string.ai_enable_title),
+                    subtitle = stringResource(R.string.ai_enable_desc),
+                    trailing = {
+                        Switch(
+                            checked = isAiEnabled,
+                            onCheckedChange = { enabled ->
+                                isAiEnabled = enabled
+                                aiStatsStorage.setAiEnabled(enabled)
+                            }
+                        )
+                    }
+                )
+
+                if (isAiEnabled) {
+                    RowDivider()
+                    SettingsRow(
+                        icon = Icons.Filled.AutoAwesome,
+                        title = stringResource(R.string.ai_api_key_title),
+                        subtitle = if (apiKey.isNotBlank()) {
+                            stringResource(R.string.ai_api_key_configured)
+                        } else {
+                            stringResource(R.string.ai_api_key_not_configured)
+                        },
+                        onClick = { showApiKeyDialog = true },
+                        trailing = { NavChevron() }
+                    )
+
+                    RowDivider()
+                    // AI Stats display
+                    val aiStats = aiStatsStorage.getStatsSnapshot()
+                    AiStatsSection(
+                        stats = aiStats,
+                        onResetClick = { showResetAiStatsDialog = true }
+                    )
+                }
+            }
+
             SettingsSection(title = stringResource(R.string.settings_section_general)) {
                 SettingsRow(
                     icon = Icons.Filled.History,
@@ -358,6 +483,75 @@ fun SettingsScreen(
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         }
+    }
+}
+
+@Composable
+private fun AiStatsSection(
+    stats: com.donotnotify.donotnotify.AiStats,
+    onResetClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.ai_stats_title),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            AiStatItem(
+                label = stringResource(R.string.ai_stat_judgments),
+                value = stats.judgmentCount
+            )
+            AiStatItem(
+                label = stringResource(R.string.ai_stat_blocks),
+                value = stats.blockCount
+            )
+            AiStatItem(
+                label = stringResource(R.string.ai_stat_rules),
+                value = stats.rulesCreatedCount
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        TextButton(
+            onClick = onResetClick,
+            modifier = Modifier.align(Alignment.End)
+        ) {
+            Text(stringResource(R.string.ai_reset_stats_button))
+        }
+    }
+}
+
+@Composable
+private fun AiStatItem(
+    label: String,
+    value: Int
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = value.toString(),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

@@ -4,6 +4,7 @@ import android.app.Notification
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
@@ -14,6 +15,7 @@ import com.donotnotify.donotnotify.setup.SetupState
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 class NotificationBlockerService : NotificationListenerService() {
 
@@ -29,6 +31,12 @@ class NotificationBlockerService : NotificationListenerService() {
         const val ACTION_HISTORY_UPDATED = "com.donotnotify.donotnotify.HISTORY_UPDATED"
         private const val DEBOUNCE_PERIOD_MS = 5000L
         private val HEARTBEAT_INTERVAL_MS = TimeUnit.HOURS.toMillis(1)
+
+        // AI judgment settings
+        private const val AI_ENABLED_KEY = "ai_judgment_enabled"
+        private const val AI_API_KEY_KEY = "ai_api_key"
+        private const val AI_TIMEOUT_MS = 5000L
+        private const val AI_CONFIDENCE_THRESHOLD = 0.7f
     }
 
     private val heartbeatHandler = Handler(Looper.getMainLooper())
@@ -42,6 +50,15 @@ class NotificationBlockerService : NotificationListenerService() {
     private val recentlyBlocked = mutableMapOf<String, Long>()
     private val historyExecutor: ExecutorService = Executors.newSingleThreadExecutor { r ->
         Thread(r, "history-writer").apply { isDaemon = true }
+    }
+
+    // --- AI Integration ---
+    private var aiJudge: AiNotificationJudge? = null
+    private var aiRuleGenerator: AiRuleGenerator? = null
+    private lateinit var settingsPrefs: SharedPreferences
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val aiCheckExecutor: ExecutorService = Executors.newFixedThreadPool(2) { r ->
+        Thread(r, "ai-check").apply { isDaemon = true }
     }
 
     private val stackPoster: StackedNotificationManager.StackPoster by lazy {
@@ -74,6 +91,49 @@ class NotificationBlockerService : NotificationListenerService() {
         statsStorage = StatsStorage(this)
         unmonitoredAppsStorage = UnmonitoredAppsStorage(this)
         appInfoStorage = AppInfoStorage(this)
+        settingsPrefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        initAiJudge()
+        aiRuleGenerator = AiRuleGenerator(ruleStorage)
+    }
+
+    private fun initAiJudge() {
+        val apiKey = settingsPrefs.getString(AI_API_KEY_KEY, null)
+        if (apiKey.isNullOrBlank()) {
+            Log.i(TAG, "AI judge not initialized — no API key configured")
+            return
+        }
+        aiJudge = AiNotificationJudge(key = apiKey)
+        Log.i(TAG, "AI judge initialized")
+    }
+
+    /**
+     * Whether AI-powered judgment is currently active (enabled in settings AND API key configured).
+     */
+    fun isAiEnabled(): Boolean =
+        settingsPrefs.getBoolean(AI_ENABLED_KEY, false) && aiJudge != null
+
+    /**
+     * Enable or disable AI judgment at runtime (e.g. from a settings toggle).
+     */
+    fun setAiEnabled(enabled: Boolean) {
+        settingsPrefs.edit().putBoolean(AI_ENABLED_KEY, enabled).apply()
+        if (enabled && aiJudge == null) {
+            initAiJudge()
+        }
+        Log.i(TAG, "AI judgment ${if (enabled) "enabled" else "disabled"}")
+    }
+
+    /**
+     * Update the AI API key at runtime (e.g. from a settings screen).
+     */
+    fun updateAiApiKey(key: String) {
+        settingsPrefs.edit().putString(AI_API_KEY_KEY, key).apply()
+        if (aiJudge != null) {
+            aiJudge!!.updateApiKey(key)
+        } else {
+            aiJudge = AiNotificationJudge(key = key)
+        }
+        Log.i(TAG, "AI API key updated")
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -187,6 +247,14 @@ class NotificationBlockerService : NotificationListenerService() {
             // normal-history branch below (blocked count is not incremented).
         }
 
+        // --- AI judgment: only for notifications that passed traditional rules ---
+        // If traditional rules already blocked or stacked the notification, no AI check needed.
+        // AI runs asynchronously; if it judges the notification as spam, it cancels it
+        // after the fact. Fail-open on timeout (5 s) or error.
+        if (!isBlocked && !decision.shouldStack && isAiEnabled()) {
+            submitAiJudgment(packageName, title, text, sbn.key)
+        }
+
         // Carry the matched rule *ids*, not a whole-list snapshot: storage re-reads current
         // state and bumps only these, so a hit-count write can never resurrect a rule the UI
         // deleted (or clobber an edit) in the window before the executor runs.
@@ -266,6 +334,17 @@ class NotificationBlockerService : NotificationListenerService() {
         } catch (e: Exception) {
             Log.w(TAG, "reconcileOnConnect failed", e)
         }
+        // Upgrade PENDING AI-generated rules that have accumulated enough hits.
+        aiCheckExecutor.execute {
+            try {
+                val promoted = aiRuleGenerator?.upgradePENDING() ?: 0
+                if (promoted > 0) {
+                    Log.i(TAG, "Promoted $promoted AI-generated rule(s) to CONFIRMED on connect")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to upgrade PENDING rules on connect", e)
+            }
+        }
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
@@ -302,6 +381,81 @@ class NotificationBlockerService : NotificationListenerService() {
             }
         } catch (e: InterruptedException) {
             historyExecutor.shutdownNow()
+        }
+        // Clean up AI resources
+        aiCheckExecutor.shutdown()
+        try {
+            if (!aiCheckExecutor.awaitTermination(2, TimeUnit.SECONDS)) {
+                aiCheckExecutor.shutdownNow()
+            }
+        } catch (e: InterruptedException) {
+            aiCheckExecutor.shutdownNow()
+        }
+        aiJudge?.shutdown()
+    }
+
+    // -------------------------------------------------------------------------
+    // AI Judgment
+    // -------------------------------------------------------------------------
+
+    /**
+     * Submits an asynchronous AI judgment for a notification that passed traditional rules.
+     * Runs on [aiCheckExecutor]; cancels the notification on the main thread if the AI
+     * judges it as spam with sufficient confidence. When the notification is judged as spam,
+     * [AiRuleGenerator] is invoked to auto-generate a blocking rule for future matching.
+     * Fail-open on timeout or error.
+     */
+    private fun submitAiJudgment(
+        packageName: String,
+        title: String?,
+        text: String?,
+        notificationKey: String
+    ) {
+        val judge = aiJudge ?: return
+
+        aiCheckExecutor.execute {
+            try {
+                val future = judge.judgeAsync(packageName, title, text)
+                // Block this worker thread with a timeout; fail-open on TimeoutException.
+                val judgment = future.get(AI_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+
+                if (judgment.isSpam && judgment.confidence >= AI_CONFIDENCE_THRESHOLD) {
+                    Log.i(TAG, "AI judged notification as spam (confidence=${judgment.confidence}): ${judgment.reason}")
+                    // Must cancel from the main thread (Binder call).
+                    mainHandler.post {
+                        try {
+                            cancelNotification(notificationKey)
+                            Log.i(TAG, "AI-blocked notification: $packageName key=$notificationKey")
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Failed to AI-cancel notification $notificationKey", e)
+                        }
+                    }
+
+                    // Auto-generate a rule so future notifications from this app are blocked
+                    // without needing another AI call.
+                    try {
+                        aiRuleGenerator?.tryGenerate(packageName, title, text, judgment)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to auto-generate rule for $packageName", e)
+                    }
+
+                    // Promote any PENDING rules that have accumulated enough hits.
+                    try {
+                        val promoted = aiRuleGenerator?.upgradePENDING() ?: 0
+                        if (promoted > 0) {
+                            Log.i(TAG, "Promoted $promoted AI-generated rule(s) to CONFIRMED")
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to upgrade PENDING rules", e)
+                    }
+                } else {
+                    Log.d(TAG, "AI cleared notification from $packageName: ${judgment.reason} (confidence=${judgment.confidence})")
+                }
+            } catch (e: TimeoutException) {
+                Log.w(TAG, "AI judgment timed out for $packageName — fail-open (notification kept)")
+            } catch (e: Exception) {
+                Log.e(TAG, "AI judgment failed for $packageName — fail-open", e)
+            }
         }
     }
 

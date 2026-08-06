@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.AccessAlarms
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.automirrored.outlined.Rule
 import androidx.compose.material3.Button
@@ -40,14 +41,19 @@ import android.provider.Settings
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import com.donotnotify.donotnotify.BlockerRule
 import com.donotnotify.donotnotify.R
 import com.donotnotify.donotnotify.RuleType
@@ -55,6 +61,7 @@ import com.donotnotify.donotnotify.StackChannels
 import com.donotnotify.donotnotify.StackedNotificationManager
 import com.donotnotify.donotnotify.ui.components.EmptyState
 import com.donotnotify.donotnotify.ui.components.label
+import com.donotnotify.donotnotify.AiMetadata
 
 @Composable
 fun RulesScreen(
@@ -176,6 +183,8 @@ private fun RuleCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val isAiGenerated = rule.aiMetadata != null
+
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
@@ -201,6 +210,12 @@ private fun RuleCard(
                         textDecoration = if (rule.isEnabled) null else TextDecoration.LineThrough
                     )
                 }
+
+                // AI badge for AI-generated rules
+                if (isAiGenerated) {
+                    AiRuleBadge(rule.aiMetadata!!)
+                }
+
                 val notApplicable = stringResource(R.string.not_applicable)
                 val titleFilterText = if (rule.titleFilter.isNullOrBlank()) notApplicable else rule.titleFilter.orEmpty()
                 Text(
@@ -308,5 +323,62 @@ private fun RuleCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AiRuleBadge(metadata: AiMetadata) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(top = 4.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Filled.AutoAwesome,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(14.dp)
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        SuggestionChip(
+            onClick = {},
+            label = {
+                Text(
+                    text = stringResource(R.string.ai_generated_rule),
+                    style = MaterialTheme.typography.labelSmall
+                )
+            },
+            icon = null,
+            colors = SuggestionChipDefaults.suggestionChipColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                labelColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ),
+            modifier = Modifier.height(24.dp)
+        )
+
+        if (metadata.status == AiMetadata.PENDING) {
+            Spacer(modifier = Modifier.width(4.dp))
+            SuggestionChip(
+                onClick = {},
+                label = {
+                    Text(
+                        text = stringResource(R.string.ai_rule_pending),
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                },
+                icon = null,
+                colors = SuggestionChipDefaults.suggestionChipColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    labelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                ),
+                modifier = Modifier.height(24.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = stringResource(R.string.ai_rule_confidence, (metadata.confidence * 100).toInt()),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
