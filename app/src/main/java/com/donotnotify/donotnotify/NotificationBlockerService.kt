@@ -4,7 +4,6 @@ import android.app.Notification
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
@@ -32,9 +31,6 @@ class NotificationBlockerService : NotificationListenerService() {
         private const val DEBOUNCE_PERIOD_MS = 5000L
         private val HEARTBEAT_INTERVAL_MS = TimeUnit.HOURS.toMillis(1)
 
-        // AI judgment settings
-        private const val AI_ENABLED_KEY = "ai_judgment_enabled"
-        private const val AI_API_KEY_KEY = "ai_api_key"
         private const val AI_TIMEOUT_MS = 5000L
         private const val AI_CONFIDENCE_THRESHOLD = 0.7f
     }
@@ -55,7 +51,7 @@ class NotificationBlockerService : NotificationListenerService() {
     // --- AI Integration ---
     private var aiJudge: AiNotificationJudge? = null
     private var aiRuleGenerator: AiRuleGenerator? = null
-    private lateinit var settingsPrefs: SharedPreferences
+    private lateinit var aiStatsStorage: AiStatsStorage
     private val mainHandler = Handler(Looper.getMainLooper())
     private val aiCheckExecutor: ExecutorService = Executors.newFixedThreadPool(2) { r ->
         Thread(r, "ai-check").apply { isDaemon = true }
@@ -91,13 +87,13 @@ class NotificationBlockerService : NotificationListenerService() {
         statsStorage = StatsStorage(this)
         unmonitoredAppsStorage = UnmonitoredAppsStorage(this)
         appInfoStorage = AppInfoStorage(this)
-        settingsPrefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        aiStatsStorage = AiStatsStorage(this)
         initAiJudge()
         aiRuleGenerator = AiRuleGenerator(ruleStorage)
     }
 
     private fun initAiJudge() {
-        val apiKey = settingsPrefs.getString(AI_API_KEY_KEY, null)
+        val apiKey = aiStatsStorage.getApiKey()
         if (apiKey.isNullOrBlank()) {
             Log.i(TAG, "AI judge not initialized — no API key configured")
             return
@@ -110,13 +106,13 @@ class NotificationBlockerService : NotificationListenerService() {
      * Whether AI-powered judgment is currently active (enabled in settings AND API key configured).
      */
     fun isAiEnabled(): Boolean =
-        settingsPrefs.getBoolean(AI_ENABLED_KEY, false) && aiJudge != null
+        aiStatsStorage.isAiEnabled() && aiJudge != null
 
     /**
      * Enable or disable AI judgment at runtime (e.g. from a settings toggle).
      */
     fun setAiEnabled(enabled: Boolean) {
-        settingsPrefs.edit().putBoolean(AI_ENABLED_KEY, enabled).apply()
+        aiStatsStorage.setAiEnabled(enabled)
         if (enabled && aiJudge == null) {
             initAiJudge()
         }
@@ -127,9 +123,9 @@ class NotificationBlockerService : NotificationListenerService() {
      * Update the AI API key at runtime (e.g. from a settings screen).
      */
     fun updateAiApiKey(key: String) {
-        settingsPrefs.edit().putString(AI_API_KEY_KEY, key).apply()
+        aiStatsStorage.setApiKey(key)
         if (aiJudge != null) {
-            aiJudge!!.updateApiKey(key)
+            aiJudge?.updateApiKey(key)
         } else {
             aiJudge = AiNotificationJudge(key = key)
         }
@@ -417,10 +413,16 @@ class NotificationBlockerService : NotificationListenerService() {
             try {
                 val future = judge.judgeAsync(packageName, title, text)
                 // Block this worker thread with a timeout; fail-open on TimeoutException.
+                // Increment judgment count
+                try { aiStatsStorage.incrementJudgmentCount() } catch (_: Exception) {}
+
                 val judgment = future.get(AI_TIMEOUT_MS, TimeUnit.MILLISECONDS)
 
                 if (judgment.isSpam && judgment.confidence >= AI_CONFIDENCE_THRESHOLD) {
                     Log.i(TAG, "AI judged notification as spam (confidence=${judgment.confidence}): ${judgment.reason}")
+                    // Increment block count
+                    try { aiStatsStorage.incrementBlockCount() } catch (_: Exception) {}
+
                     // Must cancel from the main thread (Binder call).
                     mainHandler.post {
                         try {
@@ -434,7 +436,10 @@ class NotificationBlockerService : NotificationListenerService() {
                     // Auto-generate a rule so future notifications from this app are blocked
                     // without needing another AI call.
                     try {
-                        aiRuleGenerator?.tryGenerate(packageName, title, text, judgment)
+                        val newRule = aiRuleGenerator?.tryGenerate(packageName, title, text, judgment)
+                        if (newRule != null) {
+                            try { aiStatsStorage.incrementRulesCreatedCount() } catch (_: Exception) {}
+                        }
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to auto-generate rule for $packageName", e)
                     }
